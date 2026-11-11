@@ -8,6 +8,8 @@ Buka `index.html` dalam pelayar. Tanpa Firebase, aplikasi berjalan dalam **mod d
 - Ibu bapa: tab **Ibu Bapa**, guna No. KP yang ditunjukkan dan PIN `DEMO26`.
 
 ## 2. Sambung Firebase (kegunaan sebenar)
+> Fail `index.html` dalam repo ini sudah disambungkan ke projek Firebase **mymarkah**. Langkah 1–5 di bawah perlu dilakukan sekali di Firebase Console.
+
 Boleh guna projek sedia ada (`skjb-icthub`) atau projek baharu.
 
 1. **Firebase Console → Authentication → Sign-in method** → hidupkan **Email/Password**.

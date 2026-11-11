@@ -282,7 +282,14 @@ pre.code{background:var(--bg);border:1px solid var(--line);border-radius:8px;pad
    Tampal firebaseConfig projek anda di bawah. Jika dibiarkan
    null, aplikasi berjalan dalam MOD DEMO (data dalam pelayar).
    ========================================================= */
-const FIREBASE_CONFIG = null; /* contoh: { apiKey:"...", authDomain:"skjb-icthub.firebaseapp.com", projectId:"skjb-icthub", ... } */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyA4RdKHm5U6wVErFI9L-Y3uYcV59XeXE30",
+  authDomain: "mymarkah.firebaseapp.com",
+  projectId: "mymarkah",
+  storageBucket: "mymarkah.firebasestorage.app",
+  messagingSenderId: "191103615202",
+  appId: "1:191103615202:web:dc0586d3d1d7e12e161ebb"
+};
 const ADMIN_EMAILS = [];      /* emel pentadbir utama, cth: ["pentadbir@moe-dl.edu.my"] */
 const FB_VER = "10.12.2";
 
@@ -573,7 +580,8 @@ function markDirty(key, mid, path, v) {
 
 async function loadYear(y) {
   S.tahun = String(y);
-  S.cfg = await S.db.get("tahun", S.tahun) || defaultCfg(S.tahun);
+  S.cfg = await S.db.get("tahun", S.tahun);
+  if (!S.cfg) { S.cfg = defaultCfg(S.tahun); if (isAdmin()) await S.db.set("tahun", S.tahun, S.cfg).catch(() => { }); } /* first admin login saves the default setup */
   S.murid = {}; S.markah = {}; S.audit = {}; S.gs = {}; S.gsMeta = {}; S.patch.clear();
   for (const d of await S.db.list("murid", S.tahun + "_")) S.murid[d.id.slice(S.tahun.length + 1)] = d.data.senarai || [];
   for (const d of await S.db.list("markah", S.tahun + "_")) { const key = d.id.slice(S.tahun.length + 1); S.markah[key] = d.data.data || {}; S.audit[key] = d.data.audit || {}; }
