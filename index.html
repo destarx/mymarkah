@@ -224,6 +224,8 @@ pre.code{background:var(--bg);border:1px solid var(--line);border-radius:8px;pad
 .tg:hover{border-color:var(--em)}
 .tg span{font-size:12px;color:var(--muted)}
 .tg span.ok{color:var(--em);font-weight:700}
+a.btn{text-decoration:none;color:inherit}
+.top .hub-link{text-decoration:none;font-weight:600}
 .settabs{display:flex;gap:6px;flex-wrap:wrap;padding:6px;background:var(--paper);border:1px solid var(--line);border-radius:12px}
 .settabs button{border:0;background:none;border-radius:8px;padding:8px 14px;font-weight:600;color:var(--muted);white-space:nowrap}
 .settabs button:hover:not(.on){background:var(--line2);color:var(--ink)}
@@ -303,6 +305,7 @@ const FIREBASE_CONFIG = {
 };
 const ADMIN_EMAILS = [];      /* emel pentadbir utama, cth: ["pentadbir@moe-dl.edu.my"] */
 const FB_VER = "10.12.2";
+const HUB_URL = "https://destarx.github.io/main/"; /* ICT Hub sekolah; kosongkan untuk sembunyikan butang */
 
 /* ---------------- utilities ---------------- */
 const $ = (s, r = document) => r.querySelector(s);
@@ -722,6 +725,7 @@ function renderLogin(err) {
       <div class="small" style="opacity:.8">Gred A–F · GP · Kedudukan dalam kelas &amp; darjah</div>
     </div>
     <div class="login-body">
+      ${HUB_URL && tab === "guru" ? `<a class="btn sm" href="${esc(HUB_URL)}" style="justify-self:start">← Kembali ke ICT Hub</a>` : ""}
       <div class="tabs" role="tablist">
         <button class="${tab === "guru" ? "on" : ""}" data-tab="guru" role="tab">Guru &amp; Pentadbir</button>
         <button class="${tab === "ibubapa" ? "on" : ""}" data-tab="ibubapa" role="tab">Ibu Bapa</button>
@@ -807,6 +811,7 @@ function render() {
   const v = S.view;
   $("#app").innerHTML = `
   <header class="top">
+    ${HUB_URL ? `<a class="btn sm hub-link" href="${esc(HUB_URL)}" title="Kembali ke ICT Hub sekolah">← ICT Hub</a>` : ""}
     <div class="brand">myMarkah<small>${esc(S.cfg.sekolah.nama)}</small></div>
     <div class="grow"></div>
     <label class="small">Tahun <select id="tYear" aria-label="Tahun">${S.meta.tahunList.map(y => `<option ${y === S.tahun ? "selected" : ""}>${y}</option>`).join("")}</select></label>
