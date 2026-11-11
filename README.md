@@ -35,6 +35,8 @@ Tetapan disusun mengikut tab: Ujian & portal, Sekolah & tahun, Kelas, Guru subje
 7. **PIN ibu bapa**: secara lalai PIN ialah **4 digit akhir No. MyKid** murid (boleh ditukar kepada PIN rawak 6 aksara di Tetapan → Ujian & portal). Edarkan melalui **Murid & PIN → Cetak senarai PIN**.
 
 ## 4. Sepanjang tahun
+- **Hak mengisi markah:** hanya guru subjek yang ditetapkan (oleh guru kelas di Kelas Saya atau pentadbir di Tetapan → Guru subjek) dan pentadbir boleh mengisi markah sesuatu subjek bagi sesuatu kelas. Guru lain melihat markah tetapi kotaknya dikunci. Ulasan & kehadiran hanya boleh diisi oleh guru kelas dan pentadbir. Guru subjek dipilih daripada senarai guru berdaftar (Tetapan → Pengguna).
+- **Peraturan Firestore dikemas kini:** guru kini boleh membaca senarai pengguna (untuk memilih guru subjek). Salin semula peraturan dari Tetapan → Pangkalan data ke Firebase dan Publish.
 - Guru: **Isi Markah** → pilih darjah (Tahun 1–6), kemudian tab kelas (Achiever, Brilliant, Champion, Dynamic, Energetic), tab ujian (Sumatif 1 / 2 / 3), kelas dan subjek, isi markah, kemudian tekan **Simpan markah** (atau Ctrl+S). Sel yang belum disimpan berwarna kuning, dan aplikasi memberi amaran jika guru cuba keluar sebelum menyimpan. Dua guru boleh isi subjek berbeza untuk kelas yang sama serentak.
 - Setiap simpanan merekod **nama guru dan masa kemas kini terakhir** bagi setiap subjek; dipaparkan di Isi Markah dan Semakan.
 - Pentadbir: **Semakan** → jadual kelas × subjek bagi setiap ujian (hijau lengkap, kuning separuh, merah belum diisi). Klik petak untuk senarai murid yang belum diisi dan untuk menetapkan guru subjek. Butang **Salin senarai (WhatsApp)** menyediakan mesej peringatan mengikut guru.

@@ -215,6 +215,15 @@ pre.code{background:var(--bg);border:1px solid var(--line);border-radius:8px;pad
 .gbtn{justify-content:center;padding:11px 16px;font-size:15px}
 .gbtn .gdot{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--paper);color:var(--em-deep);font-weight:800;font-size:13px}
 .stform{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:10px;align-items:end}
+.banner.ro{background:var(--line2);color:var(--ink)}
+.t th.mine{background:var(--gold-soft);color:var(--warn)}
+.ktabs .mine-k{color:var(--warn);font-weight:700}
+.ktabs button.on .mine-k{color:inherit}
+.tugas{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,210px),1fr));gap:8px;margin-top:8px}
+.tg{border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:10px 12px;display:grid;gap:2px;text-align:left}
+.tg:hover{border-color:var(--em)}
+.tg span{font-size:12px;color:var(--muted)}
+.tg span.ok{color:var(--em);font-weight:700}
 .settabs{display:flex;gap:6px;flex-wrap:wrap;padding:6px;background:var(--paper);border:1px solid var(--line);border-radius:12px}
 .settabs button{border:0;background:none;border-radius:8px;padding:8px 14px;font-weight:600;color:var(--muted);white-space:nowrap}
 .settabs button:hover:not(.on){background:var(--line2);color:var(--ink)}
@@ -650,13 +659,14 @@ async function seedDemo() {
   }
   const GS = { BM: "CIKGU AZLINA (DEMO)", BI: "CIKGU JENNY ANAK LAING (DEMO)", MT: "CIKGU FARID HAKIMI (DEMO)", SN: "CIKGU MEI LING (DEMO)", SEJ: "CIKGU NURUL AIN (DEMO)", PMZ: "CIKGU DAVID LAWAI (DEMO)" };
   cfg.kelas.find(k => k.id === "k6a").guruEmel = "demo-guru";
+  const GE = {}; for (const kod in GS) { GE[kod] = "demo-" + kod.toLowerCase(); await db.set("staff", GE[kod], { nama: GS[kod], peranan: "guru", emel: GE[kod] }); }
   await db.set("staff", "demo-guru", { nama: cfg.kelas.find(k => k.id === "k6a").guru, peranan: "guru", emel: "demo-guru" });
   await db.set("staff", "demo", { nama: "PENTADBIR (DEMO)", peranan: "admin", emel: "demo" });
-  for (const k of cfg.kelas) await db.set("guruSubjek", `${y}_${k.id}`, { map: k.id === "k6a" ? { BM: GS.BM, BI: GS.BI, MT: GS.MT } : { ...GS }, guruKelasEmel: k.guruEmel || "", oleh: "PENTADBIR (DEMO)", masa: new Date().toISOString() });
+  for (const k of cfg.kelas) await db.set("guruSubjek", `${y}_${k.id}`, { map: k.id === "k6a" ? { BM: GE.BM, BI: GE.BI, MT: GE.MT, SN: GE.SN, SEJ: "demo-guru", PSV: "demo-guru", PMZ: GE.PMZ } : { ...GE }, guruKelasEmel: k.guruEmel || "", oleh: "PENTADBIR (DEMO)", masa: new Date().toISOString() });
   const au = {}; for (const u in mk) for (const k of cfg.kelas) { const a = au[u + "_" + k.id] = {}; const t = new Date(Date.now() - (u === "U1" ? 60 : 3) * 864e5 - Math.floor(rnd() * 864e5)).toISOString();
     for (const s of cfg.subjek.filter(s => s.darjah.includes(k.darjah))) if (Object.values(mk[u][k.id]).some(r => r.m[s.kod] != null)) a[s.kod] = { nama: GS[s.kod] || k.guru, emel: "demo", masa: t };
     a._ulasan = { nama: k.guru, emel: "demo", masa: t }; }
-  await db.set("app", "meta", { tahunAktif: y, tahunList: [y], demo: true, seedVer: 6 });
+  await db.set("app", "meta", { tahunAktif: y, tahunList: [y], demo: true, seedVer: 7 });
   await db.set("tahun", y, cfg);
   for (const k in murid) await db.set("murid", `${y}_${k}`, { senarai: murid[k] });
   for (const u in mk) for (const k in mk[u]) await db.set("markah", `${y}_${u}_${k}`, { data: mk[u][k], audit: au[u + "_" + k] || {} });
@@ -670,7 +680,7 @@ async function boot() {
     try { S.fb = await loadFirebase(cfg); S.db = new FireDB(S.fb); S.mode = "firebase"; }
     catch (e) { console.error(e); S.mode = "local"; S.db = new LocalDB(); S.fbErr = e.message; }
   } else { S.mode = "local"; S.db = new LocalDB(); }
-  if (S.mode === "local") { const mt = await S.db.get("app", "meta"); if (!mt || (mt.demo && mt.seedVer !== 6)) { LS.keys().filter(k => k && k.startsWith("emarkah:")).forEach(k => LS.del(k)); await seedDemo(); } }
+  if (S.mode === "local") { const mt = await S.db.get("app", "meta"); if (!mt || (mt.demo && mt.seedVer !== 7)) { LS.keys().filter(k => k && k.startsWith("emarkah:")).forEach(k => LS.del(k)); await seedDemo(); } }
   if (S.mode === "firebase") {
     S.fb.onAuthStateChanged(S.fb.auth, async u => {
       if (u && !S.user && u.email) { try { await staffAfterAuth(u.email); } catch (e) { renderLogin(e.message); } }
@@ -687,7 +697,7 @@ async function staffAfterAuth(email) {
     try { await S.db.set("staff", email, rec); st = rec; } catch (e) { } }
   if (!st) { await S.fb.signOut(S.fb.auth); throw new Error(`Akaun ${email} belum didaftarkan dalam myMarkah. Minta pentadbir mendaftarkan emel DELIMa anda di Tetapan → Pengguna.`); }
   S.user = { ...st, emel: email };
-  if (st.peranan === "admin") S.db.list("staff").then(l => S.staffNames = l.map(x => x.data.nama)).catch(() => { });
+  await loadStaffAll();
   S.meta = await S.db.get("app", "meta") || { tahunAktif: String(new Date().getFullYear()), tahunList: [String(new Date().getFullYear())] };
   if (!(await S.db.get("app", "meta")) && isAdmin()) await saveMeta();
   await loadYear(S.meta.tahunAktif); render();
@@ -777,7 +787,7 @@ function renderLogin(err) {
 }
 async function demoLogin(role) {
   S.user = role === "admin" ? { nama: "Pentadbir (demo)", peranan: "admin", emel: "demo" } : { nama: "Guru (demo)", peranan: "guru", emel: "demo-guru" };
-  S.meta = await S.db.get("app", "meta"); await loadYear(S.meta.tahunAktif);
+  S.meta = await S.db.get("app", "meta"); await loadYear(S.meta.tahunAktif); await loadStaffAll();
   if (role !== "admin") { const k = S.cfg.kelas.find(x => x.guruEmel === "demo-guru"); if (k) S.user.nama = k.guru; }
   render();
 }
@@ -876,7 +886,17 @@ function exTabs(id, kelas) {
       <span class="ex-m">${u.kunci ? "Dikunci" : "Dibuka"}${p ? ` · ${fmt(pc(p.done, p.need), 0)}% diisi` : ""}</span></button>`;
   }).join("")}</div>`;
 }
-const guruSubjek = (kid, kod) => S.gs[kid]?.[kod] || "";
+/* subject teacher is stored as the teacher's login email; older entries may hold a plain name */
+const myEmel = () => String(S.user?.emel || "").toLowerCase();
+const staffNama = em => (S.staffAll || []).find(x => x.id === em)?.data?.nama || "";
+const gsVal = (kid, kod) => String(S.gs[kid]?.[kod] || "");
+const gsEmel = (kid, kod) => { const v = gsVal(kid, kod).toLowerCase(); return v && (v.includes("@") || (S.staffAll || []).some(x => x.id === v)) ? v : ""; };
+const guruSubjek = (kid, kod) => { const e = gsEmel(kid, kod); return e ? (staffNama(e) || e) : gsVal(kid, kod); };
+/* only the tagged subject teacher (or an admin) may key in marks for that class + subject */
+const bolehIsi = (kid, kod) => { if (isAdmin()) return true; const e = gsEmel(kid, kod); if (e) return e === myEmel(); const v = gsVal(kid, kod); return !!v && v.toUpperCase() === String(S.user?.nama || "").toUpperCase(); };
+const bolehUlasan = kid => isAdmin() || myKelas().some(k => k.id === kid);
+const tugasanSaya = () => S.cfg.kelas.flatMap(k => subjOf(k.darjah).filter(s => !isAdmin() && bolehIsi(k.id, s.kod)).map(s => ({ k, s })));
+async function loadStaffAll() { S.staffAll = await S.db.list("staff").catch(() => []) || []; }
 function auditTxt(key, kod) {
   const a = (S.audit[key] || {})[kod];
   return a ? `Kemas kini terakhir oleh <b>${esc(a.nama)}</b> · ${esc(fmtMasa(a.masa))}` : `<span class="muted">Belum pernah disimpan</span>`;
@@ -894,6 +914,7 @@ function isiPicker(el) {
   const c = S.cfg; const u = c.ujian.find(x => x.id === S.sel.ujian) || c.ujian[0]; S.sel.ujian = u.id;
   el.innerHTML = `<div class="head"><div><div class="eyebrow">Isi markah · Tahun akademik ${S.tahun}</div><h2>Pilih darjah</h2></div></div>
   ${exTabs("iTabs")}
+  ${!isAdmin() ? (() => { const t = tugasanSaya(); const gk = myKelas(); return `<div class="panel"><h3>Tugasan isian anda</h3>${t.length || gk.length ? `<div class="tugas">${t.map(({ k, s }) => { const p = isiKiraan(u.id, k, s.kod); return `<button class="tg" data-tk="${k.id}" data-ts="${esc(s.kod)}"><b>${esc(k.nama)} · ${esc(s.kod)}</b><span>${esc(s.nama)}</span><span class="${p.done === p.need && p.need ? "ok" : ""}">${p.done}/${p.need} murid diisi</span></button>`; }).join("")}${gk.map(k => `<button class="tg" data-tk="${k.id}" data-tu="1"><b>${esc(k.nama)} · Ulasan</b><span>Ulasan &amp; kehadiran (guru kelas)</span><span>&nbsp;</span></button>`).join("")}</div>` : `<p class="muted" style="margin:0">Anda belum ditetapkan sebagai guru subjek bagi mana-mana kelas. Minta guru kelas (menu Kelas Saya) atau pentadbir menetapkannya. Anda masih boleh melihat markah semua kelas.</p>`}</div>`; })() : ""}
   <div class="dgrid">${ALL.map(d => {
     const kls = kelasOfDarjah(d).slice().sort((a, b) => a.nama.localeCompare(b.nama)); const nm = kls.reduce((a, k) => a + muridOf(k.id).length, 0);
     let need = 0, done = 0; kls.forEach(k => { const p = isiKiraan(u.id, k); need += p.need; done += p.done; });
@@ -906,10 +927,11 @@ function isiPicker(el) {
   $$("#iTabs button").forEach(b => b.onclick = () => { S.sel.ujian = b.dataset.u; render(); });
   $$(".dcard").forEach(b => b.onclick = async () => {
     const d = +b.dataset.d; S.sel.isiDarjah = d; const kls = kelasOfDarjah(d).slice().sort((a, b) => a.nama.localeCompare(b.nama));
-    if (!kls.find(k => k.id === S.sel.kelas)) S.sel.kelas = kls[0].id;
-    await refreshMarkah(mkKey(S.sel.ujian, S.sel.kelas)); render(); window.scrollTo(0, 0);
+    if (!kls.find(k => k.id === S.sel.kelas)) S.sel.kelas = (kls.find(k => subjOf(d).some(s => !isAdmin() && bolehIsi(k.id, s.kod))) || kls[0]).id;
+    pilihSubjekSaya(); await refreshMarkah(mkKey(S.sel.ujian, S.sel.kelas)); render(); window.scrollTo(0, 0);
   });
   $("#saveBtn") && ($("#saveBtn").onclick = async () => { if (await flushNow()) { toast("Markah telah disimpan."); render(); } });
+  $$(".tg").forEach(b => b.onclick = async () => { const k = kelasById(b.dataset.tk); Object.assign(S.sel, { isiDarjah: k.darjah, kelas: k.id, isiMod: b.dataset.tu ? "ulasan" : "subjek", ...(b.dataset.ts ? { subjek: b.dataset.ts } : {}) }); await refreshMarkah(mkKey(S.sel.ujian, k.id)); render(); window.scrollTo(0, 0); });
 }
 VIEWS.isi = el => {
   const c = S.cfg; if (!c.kelas.length) { el.innerHTML = emptyState("Belum ada kelas."); return; }
@@ -920,20 +942,25 @@ VIEWS.isi = el => {
   if (!subj.find(s => s.kod === S.sel.subjek)) S.sel.subjek = subj[0]?.kod;
   const u = c.ujian.find(x => x.id === S.sel.ujian) || c.ujian[0]; S.sel.ujian = u.id;
   const locked = u.kunci && !isAdmin(); const key = mkKey(u.id, k.id);
+  const roS = kod => locked || !bolehIsi(k.id, kod); const roU = locked || !bolehUlasan(k.id);
+  const milik = subj.filter(x => bolehIsi(k.id, x.kod));
   S.markah[key] = S.markah[key] || {};
   const ms = muridOf(k.id); const mod = S.sel.isiMod;
   const s = subj.find(x => x.kod === S.sel.subjek);
   const head = `
   <div class="head"><div class="crumb"><button class="btn sm" id="iBack">← Pilih darjah</button><div><div class="eyebrow">Isi markah · Tahun ${S.sel.isiDarjah}</div><h2>${esc(k.nama)}</h2></div></div></div>
   ${exTabs("iTabs", k)}
-  <div class="ktabs" id="iKt" role="tablist" aria-label="Kelas">${kls.map(x => { const p = isiKiraan(u.id, x); return `<button role="tab" aria-selected="${x.id === k.id}" class="${x.id === k.id ? "on" : ""}" data-k="${x.id}"><span class="kn">${esc(pendekKelas(x.nama))}</span><span class="km">${muridOf(x.id).length} murid · ${fmt(pc(p.done, p.need), 0)}% diisi</span></button>`; }).join("")}</div>
+  <div class="ktabs" id="iKt" role="tablist" aria-label="Kelas">${kls.map(x => { const p = isiKiraan(u.id, x); return `<button role="tab" aria-selected="${x.id === k.id}" class="${x.id === k.id ? "on" : ""}" data-k="${x.id}"><span class="kn">${esc(pendekKelas(x.nama))}</span><span class="km">${muridOf(x.id).length} murid · ${fmt(pc(p.done, p.need), 0)}% diisi</span>${!isAdmin() ? (() => { const mine = subjOf(x.darjah).filter(s => bolehIsi(x.id, s.kod)).map(s => s.kod); return mine.length ? `<span class="km mine-k">Anda: ${mine.join(", ")}</span>` : ""; })() : ""}</button>`; }).join("")}</div>
   <div class="toolbar">
     <div class="f" style="display:grid;gap:4px"><span class="small muted" style="font-weight:600">Paparan</span><div class="seg" id="iMod">
       <button data-m="subjek" class="${mod === "subjek" ? "on" : ""}">Satu subjek</button><button data-m="semua" class="${mod === "semua" ? "on" : ""}">Semua subjek</button><button data-m="ulasan" class="${mod === "ulasan" ? "on" : ""}">Ulasan &amp; kehadiran</button></div></div>
-    ${mod === "subjek" ? `<label class="f">Subjek<select class="inp" id="iS">${opt(subj, S.sel.subjek, s => s.kod, s => `${s.kod} – ${s.nama}`)}</select></label>` : ""}
+    ${mod === "subjek" ? `<label class="f">Subjek<select class="inp" id="iS">${subj.map(x => `<option value="${esc(x.kod)}" ${x.kod === S.sel.subjek ? "selected" : ""}>${esc(x.kod)} – ${esc(x.nama)}${!isAdmin() && bolehIsi(k.id, x.kod) ? "  ✓ subjek anda" : ""}</option>`).join("")}</select></label>` : ""}
     ${topLevel ? `<button class="btn" id="iExp">Muat turun Excel</button>` : ""}
   </div>
   ${u.kunci ? `<div class="banner lock">${esc(u.nama)} telah dikunci oleh pentadbir. ${isAdmin() ? "Anda masih boleh mengubah kerana anda pentadbir." : "Markah hanya boleh dilihat."}</div>` : ""}
+  ${!locked && mod === "subjek" && s && roS(s.kod) ? `<div class="banner ro">Paparan sahaja. Hanya guru subjek ${esc(s.kod)} bagi ${esc(k.nama)} (<b>${esc(guruSubjek(k.id, s.kod) || "belum ditetapkan")}</b>) atau pentadbir boleh mengisi markah ini.${guruSubjek(k.id, s.kod) ? "" : " Minta guru kelas atau pentadbir menetapkan guru subjek."}</div>` : ""}
+  ${!locked && mod === "semua" && !isAdmin() ? `<div class="banner ro">${milik.length ? `Anda boleh mengisi: <b>${milik.map(x => esc(x.kod)).join(", ")}</b>. Lajur lain paparan sahaja.` : "Anda bukan guru subjek bagi kelas ini. Semua markah paparan sahaja."}</div>` : ""}
+  ${!locked && mod === "ulasan" && roU ? `<div class="banner ro">Paparan sahaja. Hanya guru kelas ${esc(k.nama)} (<b>${esc(k.guru || "–")}</b>) atau pentadbir boleh mengisi ulasan dan kehadiran.</div>` : ""}
   ${mod === "subjek" && s ? `<div class="auditbar"><div><span class="eyebrow">${esc(s.nama)} · ${esc(u.nama)}</span><div data-audit="${key}|${s.kod}">${auditTxt(key, s.kod)}</div></div><div class="small">Guru subjek: <b>${esc(guruSubjek(k.id, s.kod) || "belum ditetapkan")}</b></div></div>` : ""}
   ${mod === "ulasan" ? `<div class="auditbar"><div><span class="eyebrow">Ulasan &amp; kehadiran · ${esc(u.nama)}</span><div data-audit="${key}|_ulasan">${auditTxt(key, "_ulasan")}</div></div><div class="small">Guru kelas: <b>${esc(k.guru || "–")}</b></div></div>` : ""}
   <div class="muted small">Taip markah 0–100, atau <b>TH</b> untuk tidak hadir. Kosongkan jika murid tidak mengambil subjek itu. Enter turun ke murid seterusnya. Tekan <b>Simpan markah</b> (atau Ctrl+S) selepas selesai.</div>`;
@@ -942,17 +969,17 @@ VIEWS.isi = el => {
   let body = "";
   if (mod === "subjek") {
     body = `<div class="tw"><table class="t"><thead><tr><th>No</th><th class="l">Nama murid</th><th>Markah ${esc(s.kod)}</th><th>Gred</th><th class="l">Taksiran</th></tr></thead><tbody>
-    ${ms.map((m, i) => { const v = S.markah[key][m.id]?.m?.[s.kod]; const g = gradeOf(v); return `<tr><td>${i + 1}</td><td class="l name">${esc(m.nama)}</td><td><input class="mk" data-m="${m.id}" data-s="${s.kod}" value="${v ?? ""}" ${locked ? "disabled" : ""} inputmode="text" aria-label="Markah ${esc(m.nama)}"></td><td class="gc">${gchip(g)}</td><td class="l small muted tk">${esc(labelOf(g))}</td></tr>`; }).join("")}
+    ${ms.map((m, i) => { const v = S.markah[key][m.id]?.m?.[s.kod]; const g = gradeOf(v); return `<tr><td>${i + 1}</td><td class="l name">${esc(m.nama)}</td><td><input class="mk" data-m="${m.id}" data-s="${s.kod}" value="${v ?? ""}" ${roS(s.kod) ? "disabled" : ""} inputmode="text" aria-label="Markah ${esc(m.nama)}"></td><td class="gc">${gchip(g)}</td><td class="l small muted tk">${esc(labelOf(g))}</td></tr>`; }).join("")}
     </tbody></table></div>
     <div class="panel" id="iSum"></div>`;
   } else if (mod === "semua") {
-    body = `<div class="tw" style="max-height:68vh"><table class="t"><thead><tr><th class="sticky l">Nama murid</th>${subj.map(s => `<th title="${esc(s.nama)}">${esc(s.kod)}</th>`).join("")}<th>Jumlah</th><th>Purata</th><th>GP</th><th>Keputusan</th></tr></thead><tbody>
-    ${ms.map((m, i) => { const r = S.markah[key][m.id]; return `<tr data-row="${m.id}"><td class="l name sticky"><span class="muted">${i + 1}.</span> ${esc(m.nama)}</td>${subj.map(s => { const v = r?.m?.[s.kod]; return `<td><input class="mk" data-m="${m.id}" data-s="${s.kod}" value="${v ?? ""}" ${locked ? "disabled" : ""} aria-label="${esc(s.kod)} ${esc(m.nama)}" style="width:48px"></td>`; }).join("")}<td class="rj num"></td><td class="rp num"></td><td class="rg num"></td><td class="rk"></td></tr>`; }).join("")}
+    body = `<div class="tw" style="max-height:68vh"><table class="t"><thead><tr><th class="sticky l">Nama murid</th>${subj.map(s => `<th title="${esc(s.nama)}${roS(s.kod) ? " · paparan sahaja" : " · anda boleh isi"}" class="${!isAdmin() && !roS(s.kod) ? "mine" : ""}">${esc(s.kod)}</th>`).join("")}<th>Jumlah</th><th>Purata</th><th>GP</th><th>Keputusan</th></tr></thead><tbody>
+    ${ms.map((m, i) => { const r = S.markah[key][m.id]; return `<tr data-row="${m.id}"><td class="l name sticky"><span class="muted">${i + 1}.</span> ${esc(m.nama)}</td>${subj.map(s => { const v = r?.m?.[s.kod]; return `<td><input class="mk" data-m="${m.id}" data-s="${s.kod}" value="${v ?? ""}" ${roS(s.kod) ? "disabled" : ""} aria-label="${esc(s.kod)} ${esc(m.nama)}" style="width:48px"></td>`; }).join("")}<td class="rj num"></td><td class="rp num"></td><td class="rg num"></td><td class="rk"></td></tr>`; }).join("")}
     </tbody><tfoot><tr class="audit-row"><td class="l sticky small"><b>Kemas kini terakhir</b></td>${subj.map(s => `<td class="small" data-audit="${key}|${s.kod}" data-short="1">${auditShort(key, s.kod)}</td>`).join("")}<td colspan="4"></td></tr></tfoot></table></div>`;
   } else {
     body = `<datalist id="ulList">${c.ulasan.map(x => `<option value="${esc(x)}">`).join("")}</datalist>
     <div class="tw"><table class="t"><thead><tr><th>No</th><th class="l">Nama murid</th><th>GP</th><th>Kehadiran</th><th class="l">Ulasan guru kelas</th></tr></thead><tbody>
-    ${ms.map((m, i) => { const r = S.markah[key][m.id] || {}; const kk = kira(r, subj); return `<tr><td>${i + 1}</td><td class="l name">${esc(m.nama)}</td><td class="num">${fmt(kk.gp)}</td><td><input class="inp" data-h="${m.id}" value="${esc(r.hadir || "")}" placeholder="cth 58/60" style="width:96px" ${locked ? "disabled" : ""}></td><td class="l" style="min-width:340px"><div class="row" style="flex-wrap:nowrap"><input class="inp grow" list="ulList" data-u="${m.id}" value="${esc(r.ulasan || "")}" ${locked ? "disabled" : ""}><button class="btn sm" data-auto="${m.id}" ${locked ? "disabled" : ""} title="Cadang ulasan ikut GP">Auto</button></div></td></tr>`; }).join("")}
+    ${ms.map((m, i) => { const r = S.markah[key][m.id] || {}; const kk = kira(r, subj); return `<tr><td>${i + 1}</td><td class="l name">${esc(m.nama)}</td><td class="num">${fmt(kk.gp)}</td><td><input class="inp" data-h="${m.id}" value="${esc(r.hadir || "")}" placeholder="cth 58/60" style="width:96px" ${roU ? "disabled" : ""}></td><td class="l" style="min-width:340px"><div class="row" style="flex-wrap:nowrap"><input class="inp grow" list="ulList" data-u="${m.id}" value="${esc(r.ulasan || "")}" ${roU ? "disabled" : ""}><button class="btn sm" data-auto="${m.id}" ${roU ? "disabled" : ""} title="Cadang ulasan ikut GP">Auto</button></div></td></tr>`; }).join("")}
     </tbody></table></div>`;
   }
   el.innerHTML = head + body + saveBar;
@@ -999,9 +1026,10 @@ VIEWS.isi = el => {
     ensure(mid).ulasan = L[idx]; const inp = $(`[data-u="${mid}"]`, el); inp.value = L[idx]; inp.classList.add("chg"); markDirty(key, mid, ["ulasan"], L[idx]);
   });
 };
+function pilihSubjekSaya() { const k = kelasById(S.sel.kelas); if (!k || isAdmin()) return; const s = subjOf(k.darjah).find(x => bolehIsi(k.id, x.kod)); if (s && !bolehIsi(k.id, S.sel.subjek)) S.sel.subjek = s.kod; }
 function bindIsi() {
   $$("#iTabs button").forEach(b => b.onclick = async () => { S.sel.ujian = b.dataset.u; await refreshMarkah(mkKey(S.sel.ujian, S.sel.kelas)); render(); });
-  $$("#iKt button").forEach(b => b.onclick = async () => { S.sel.kelas = b.dataset.k; await refreshMarkah(mkKey(S.sel.ujian, S.sel.kelas)); render(); });
+  $$("#iKt button").forEach(b => b.onclick = async () => { S.sel.kelas = b.dataset.k; pilihSubjekSaya(); await refreshMarkah(mkKey(S.sel.ujian, S.sel.kelas)); render(); });
   $("#iBack") && ($("#iBack").onclick = () => { S.sel.isiDarjah = null; render(); window.scrollTo(0, 0); });
   $("#iS") && ($("#iS").onchange = e => { S.sel.subjek = e.target.value; render(); });
   $$("#iMod button").forEach(b => b.onclick = () => { S.sel.isiMod = b.dataset.m; render(); });
@@ -1236,16 +1264,14 @@ VIEWS.semakan = el => {
   });
 };
 function semakanCell(u, x) {
-  const names = namaGuruSemua();
   modal(`<div class="row"><h3 class="grow">${esc(x.k.nama)} · ${esc(x.s.nama)}</h3><span class="pill ${x.isi === x.bil ? "ok" : x.isi ? "mid" : "no"}">${x.isi}/${x.bil} diisi</span></div>
     <div class="small">${esc(u.nama)} · ${x.a ? `Kemas kini terakhir oleh <b>${esc(x.a.nama)}</b> · ${esc(fmtMasa(x.a.masa))}` : "Belum pernah disimpan"}</div>
-    <label class="f">Guru subjek<input class="inp" id="cG" list="cGl" value="${esc(guruSubjek(x.k.id, x.s.kod))}" placeholder="Nama guru yang mengajar subjek ini" style="text-transform:uppercase"></label>
-    <datalist id="cGl">${names.map(n => `<option value="${esc(n)}">`).join("")}</datalist>
+    <label class="f">Guru subjek (hanya guru ini dan pentadbir boleh mengisi markah)<select class="inp" id="cG"><option value="">— belum ditetapkan —</option>${(S.staffAll || []).slice().sort((a, b) => (a.data.nama || "").localeCompare(b.data.nama || "")).map(st => `<option value="${esc(st.id)}" ${st.id === gsEmel(x.k.id, x.s.kod) ? "selected" : ""}>${esc(st.data.nama)}</option>`).join("")}${gsVal(x.k.id, x.s.kod) && !gsEmel(x.k.id, x.s.kod) ? `<option selected value="${esc(gsVal(x.k.id, x.s.kod))}">${esc(gsVal(x.k.id, x.s.kod))} (belum berdaftar)</option>` : ""}</select></label>
     <label class="chk"><input type="checkbox" id="cAll"> Guna guru ini untuk ${esc(x.s.kod)} di semua kelas Tahun ${x.d}</label>
     ${x.kosong.length ? `<div><div class="eyebrow" style="margin-bottom:6px">Murid belum diisi (${x.kosong.length})</div><div class="tw" style="max-height:240px"><table class="t"><tbody>${x.kosong.map((m, i) => `<tr><td>${i + 1}</td><td class="l">${esc(m.nama)}</td></tr>`).join("")}</tbody></table></div></div>` : `<p class="muted" style="margin:0">Semua murid telah diisi.</p>`}
     <div class="row" style="justify-content:flex-end"><button class="btn" id="cOpen">Buka di Isi Markah</button><button class="btn" data-close>Tutup</button><button class="btn pri" id="cSave">Simpan guru subjek</button></div>`, (box, close) => {
     $("#cSave", box).onclick = async () => {
-      const g = $("#cG", box).value.trim().toUpperCase();
+      const g = $("#cG", box).value.trim();
       const targets = $("#cAll", box).checked ? kelasOfDarjah(x.d) : [x.k];
       for (const k of targets) { S.gs[k.id] = { ...(S.gs[k.id] || {}) }; if (g) S.gs[k.id][x.s.kod] = g; else delete S.gs[k.id][x.s.kod]; await saveGS(k.id); }
       close(); toast("Guru subjek disimpan."); render();
@@ -1265,7 +1291,7 @@ async function saveGS(kid) {
   S.gsMeta[kid] = { oleh: S.user?.nama || "", masa: new Date().toISOString() };
 }
 function namaGuruSemua() {
-  return [...new Set([...S.cfg.kelas.map(k => k.guru), ...Object.values(S.gs).flatMap(o => Object.values(o)), ...Object.values(S.audit).flatMap(a => Object.values(a).map(v => v.nama)), ...(S.staffNames || [])]
+  return [...new Set([...S.cfg.kelas.map(k => k.guru), ...Object.values(S.gs).flatMap(o => Object.values(o)), ...Object.values(S.audit).flatMap(a => Object.values(a).map(v => v.nama)), ...(S.staffAll || []).map(x => x.data.nama)]
     .filter(n => n && !/\(import Excel\)$/.test(n)).map(n => n.toUpperCase()))].sort();
 }
 function gsEditor(box, list, st) {
@@ -1277,15 +1303,18 @@ function gsEditor(box, list, st) {
   if (!kls.find(k => k.id === st.kelas)) st.kelas = kls[0].id;
   const k = kelasById(st.kelas); const subj = subjOf(k.darjah); const u = S.cfg.ujian.find(x => x.id === S.sel.ujian) || S.cfg.ujian[0];
   const map = { ...(S.gs[k.id] || {}) }; const meta = S.gsMeta[k.id]; const boleh = bolehUbahGS(k);
+  const staf = (S.staffAll || []).slice().sort((a, b) => (a.data.nama || "").localeCompare(b.data.nama || ""));
+  const pilihGuru = (kod, cur) => { const c = String(cur || "").toLowerCase(); const ada = staf.some(x => x.id === c);
+    return `<select class="inp gs-in" data-gs="${esc(kod)}" style="width:290px" ${boleh ? "" : "disabled"}><option value="">— belum ditetapkan —</option>${staf.map(x => `<option value="${esc(x.id)}" ${x.id === c ? "selected" : ""}>${esc(x.data.nama)}</option>`).join("")}${cur && !ada ? `<option value="${esc(cur)}" selected>${esc(cur)} (belum berdaftar)</option>` : ""}</select>`; };
   box.innerHTML = `
     ${ds.length > 1 ? `<div class="toolbar"><label class="f">Darjah<select class="inp" id="gsD">${ds.map(d => `<option value="${d}" ${d === +st.darjah ? "selected" : ""}>Tahun ${d}</option>`).join("")}</select></label></div>` : ""}
     ${kls.length > 1 ? `<div class="ktabs" id="gsK">${kls.map(x => { const n = subjOf(x.darjah).filter(s => (S.gs[x.id] || {})[s.kod]).length; return `<button class="${x.id === k.id ? "on" : ""}" data-k="${x.id}"><span class="kn">${esc(pendekKelas(x.nama))}</span><span class="km">${n}/${subjOf(x.darjah).length} guru ditetapkan</span></button>`; }).join("")}</div>` : ""}
     <div class="auditbar"><div><span class="eyebrow">${esc(k.nama)}</span><div>Guru kelas: <b>${esc(k.guru || "–")}</b></div></div><div class="small muted">${meta?.masa ? `Senarai dikemas kini oleh ${esc(meta.oleh)} · ${esc(fmtMasa(meta.masa))}` : "Senarai guru subjek belum pernah disimpan"}</div></div>
-    <datalist id="gsList">${namaGuruSemua().map(n => `<option value="${esc(n)}">`).join("")}</datalist>
+    ${staf.length ? "" : `<div class="banner">Belum ada guru berdaftar. Pentadbir perlu mendaftar guru di Tetapan → Pengguna dahulu.</div>`}
     <div class="tw"><table class="t"><thead><tr><th class="l">Kod</th><th class="l">Subjek</th><th class="l">Guru subjek</th><th>Isian ${esc(u?.nama || "")}</th><th class="l">Kemas kini markah terakhir</th></tr></thead><tbody>
       ${subj.map(s => { const p = u ? isiKiraan(u.id, k, s.kod) : { done: 0, need: 0 }; const a = u ? (S.audit[mkKey(u.id, k.id)] || {})[s.kod] : null;
         return `<tr><td class="l"><b>${esc(s.kod)}</b></td><td class="l">${esc(s.nama)}${s.pilihan ? ` <span class="muted small">(pilihan)</span>` : ""}</td>
-        <td class="l"><input class="inp gs-in" list="gsList" data-gs="${esc(s.kod)}" value="${esc(map[s.kod] || "")}" placeholder="Nama guru" style="width:280px;text-transform:uppercase" ${boleh ? "" : "disabled"}></td>
+        <td class="l">${pilihGuru(s.kod, map[s.kod])}</td>
         <td class="num">${p.need ? `${p.done}/${p.need}` : "–"}</td><td class="l small">${a ? `${esc(a.nama)} · ${esc(fmtMasa(a.masa))}` : `<span class="muted">–</span>`}</td></tr>`; }).join("")}
     </tbody></table></div>
     ${boleh ? `<div class="savebar" id="gsBar"><span id="gsSt" class="save-st">Tiada perubahan.</span><span class="grow"></span><button class="btn" id="gsKelasGuru" title="Isi semua subjek kosong dengan nama guru kelas">Isi kosong dengan guru kelas</button><button class="btn pri" id="gsSave" disabled>Simpan guru subjek</button></div>` : `<p class="muted small">Hanya pentadbir atau guru kelas ${esc(k.nama)} boleh mengubah senarai ini.</p>`}`;
@@ -1295,10 +1324,10 @@ function gsEditor(box, list, st) {
   const leave = async () => !dirty || await ask("Perubahan guru subjek belum disimpan. Buang perubahan?", "Buang");
   $("#gsD", box) && ($("#gsD", box).onchange = async e => { if (!(await leave())) { e.target.value = st.darjah; return; } st.darjah = +e.target.value; rerender(); });
   $$("#gsK button", box).forEach(b => b.onclick = async () => { if (!(await leave())) return; st.kelas = b.dataset.k; rerender(); });
-  $$(".gs-in", box).forEach(i => i.oninput = () => { i.classList.add("chg"); markGS(); });
-  $("#gsKelasGuru", box) && ($("#gsKelasGuru", box).onclick = () => { if (!k.guru) return toast("Nama guru kelas belum ditetapkan."); $$(".gs-in", box).forEach(i => { if (!i.value.trim()) { i.value = k.guru; i.classList.add("chg"); markGS(); } }); });
+  $$(".gs-in", box).forEach(i => i.onchange = () => { i.classList.add("chg"); markGS(); });
+  $("#gsKelasGuru", box) && ($("#gsKelasGuru", box).onclick = () => { const em = (k.guruEmel || "").toLowerCase(); if (!em || !staf.some(x => x.id === em)) return toast("Guru kelas belum didaftarkan di Tetapan → Pengguna."); $$(".gs-in", box).forEach(i => { if (!i.value) { i.value = em; i.classList.add("chg"); markGS(); } }); });
   $("#gsSave", box) && ($("#gsSave", box).onclick = async () => {
-    const m = {}; $$(".gs-in", box).forEach(i => { const v = i.value.trim().toUpperCase(); if (v) m[i.dataset.gs] = v; });
+    const m = {}; $$(".gs-in", box).forEach(i => { const v = i.value.trim(); if (v) m[i.dataset.gs] = v.includes("@") || staf.some(x => x.id === v.toLowerCase()) ? v.toLowerCase() : v; });
     const old = S.gs[k.id]; S.gs[k.id] = m;
     try { await saveGS(k.id); dirty = false; toast("Guru subjek disimpan."); rerender(); }
     catch (e) { S.gs[k.id] = old; toast(/permission|insufficient/i.test(e.message) ? "Tiada kebenaran. Minta pentadbir semak emel guru kelas di Tetapan → Kelas." : "Gagal simpan: " + e.message); }
@@ -1309,7 +1338,7 @@ VIEWS.kelassaya = el => {
   if (!ks.length) { el.innerHTML = emptyState("Anda belum ditetapkan sebagai guru kelas.", `<p class="muted" style="margin:0">Pentadbir boleh menetapkan emel anda sebagai guru kelas di Tetapan → Kelas.</p>`); return; }
   S.sel.gsSaya = S.sel.gsSaya || {};
   el.innerHTML = `<div class="head"><div><div class="eyebrow">Kelas saya · Guru kelas</div><h2>${ks.map(k => esc(k.nama)).join(", ")}</h2></div></div>
-    <p class="muted small" style="margin:0">Tetapkan guru subjek bagi kelas anda. Nama guru subjek dipaparkan di Isi Markah dan digunakan oleh pentadbir dalam Semakan untuk menghantar peringatan.</p>
+    <p class="muted small" style="margin:0">Tetapkan guru subjek bagi kelas anda daripada senarai guru berdaftar. <b>Hanya guru subjek yang ditetapkan</b> (dan pentadbir) boleh mengisi markah subjek itu bagi kelas ini; guru lain hanya boleh melihat.</p>
     <div id="gsBox" class="stack"></div>`;
   gsEditor($("#gsBox"), ks, S.sel.gsSaya);
 };
@@ -1752,7 +1781,7 @@ async function loadStaff() {
   const box = $("#staffL"); if (!box) return; const c = S.cfg;
   const kelasGuru = em => c.kelas.filter(k => (k.guruEmel || "").toLowerCase() === em).map(k => k.nama);
   try {
-    const list = (await S.db.list("staff")).sort((a, b) => (a.data.nama || "").localeCompare(b.data.nama || ""));
+    const list = (await S.db.list("staff")); S.staffAll = list.slice(); list.sort((a, b) => (a.data.nama || "").localeCompare(b.data.nama || ""));
     box.classList.remove("muted");
     box.innerHTML = list.length ? `<div class="eyebrow" style="margin-bottom:6px">${list.length} pengguna berdaftar</div><div class="tw"><table class="t"><thead><tr><th>No</th><th class="l">Nama</th><th class="l">Emel DELIMa</th><th>Peranan</th><th class="l">Guru kelas</th><th></th></tr></thead><tbody>${list.map((s, i) => `<tr><td>${i + 1}</td><td class="l">${esc(s.data.nama)}</td><td class="l">${esc(s.id)}</td><td>${s.id === S.user.emel ? `<span class="pill mid">Pentadbir</span>` : `<select class="inp" data-srole="${esc(s.id)}" aria-label="Peranan ${esc(s.data.nama)}" style="padding:4px 8px"><option value="guru" ${s.data.peranan !== "admin" ? "selected" : ""}>Guru</option><option value="admin" ${s.data.peranan === "admin" ? "selected" : ""}>Pentadbir</option></select>`}</td><td class="l">${esc(kelasGuru(s.id).join(", ")) || `<span class="muted">–</span>`}</td><td>${s.id !== S.user.emel ? `<button class="btn sm danger" data-sdel="${esc(s.id)}">Buang akses</button>` : `<span class="muted small">anda</span>`}</td></tr>`).join("")}</tbody></table></div>` : `<p class="muted" style="margin:0">Belum ada guru berdaftar. Isi borang di atas atau tampal senarai dari Excel.</p>`;
     $$("[data-srole]").forEach(sel => sel.onchange = async () => {
@@ -1838,8 +1867,8 @@ service cloud.firestore {
                             allow update: if isAdmin() || (isStaff() && resource.data.guruKelasEmel == email()
                                           && request.resource.data.guruKelasEmel == resource.data.guruKelasEmel); }
     match /portal/{id}    { allow get: if true; allow list: if false; allow write: if isAdmin(); }
-    match /staff/{em}     { allow get: if request.auth != null && (email() == em || isAdmin());
-                            allow list, write: if isAdmin(); }
+    match /staff/{em}     { allow get: if request.auth != null && (email() == em || isStaff());
+                            allow list: if isStaff(); allow write: if isAdmin(); }
   }
 }`;
 
