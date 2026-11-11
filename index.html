@@ -6,7 +6,7 @@
 <style>[hidden]{display:none!important}body{margin:0}</style>
 </head>
 <body>
-<title>eMarkah SKJB</title>
+<title>myMarkah SKJB</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Sistem markah ujian tahunan SK Jalan Bintang: guru isi markah, analisis subjek, kelas dan darjah, portal ibu bapa.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -37,6 +37,7 @@
   --in-ink:#0b1410; --c1:#3fcf8e; --c2:#e2b552; --c3:#6fa8ff; --c4:#f08a5d; --c5:#b48cf0; --c6:#5fd1c2; --c7:#ef7fb0; --c8:#b8c86a;
   --gA:#3fcf8e; --gB:#8ad16f; --gC:#e0c64a; --gD:#f0a050; --gE:#f07e5a; --gF:#ff6b6b; --gTH:#9aa0a8; color-scheme:dark}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{background:var(--bg);min-height:100%}
 body{color:var(--ink);font-family:var(--font-b);font-size:14px;line-height:1.45}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bar)}
@@ -211,6 +212,13 @@ pre.code{background:var(--bg);border:1px solid var(--line);border-radius:8px;pad
 .ktabs .km{font-size:11px;color:var(--muted)}
 .ktabs button.on{background:var(--em);border-color:var(--em);color:var(--em-ink)}
 .ktabs button.on .km{color:inherit;opacity:.85}
+.gbtn{justify-content:center;padding:11px 16px;font-size:15px}
+.gbtn .gdot{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--paper);color:var(--em-deep);font-weight:800;font-size:13px}
+.stform{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:10px;align-items:end}
+.settabs{display:flex;gap:6px;flex-wrap:wrap;padding:6px;background:var(--paper);border:1px solid var(--line);border-radius:12px}
+.settabs button{border:0;background:none;border-radius:8px;padding:8px 14px;font-weight:600;color:var(--muted);white-space:nowrap}
+.settabs button:hover:not(.on){background:var(--line2);color:var(--ink)}
+.settabs button.on{background:var(--em);color:var(--em-ink)}
 /* exam tabs, save bar, audit */
 .extabs{display:flex;border-bottom:2px solid var(--line);overflow-x:auto}
 .extabs button{border:0;background:none;padding:10px 18px 9px;display:grid;gap:2px;text-align:left;border-bottom:3px solid transparent;margin-bottom:-2px;color:var(--muted);white-space:nowrap;border-radius:8px 8px 0 0}
@@ -258,6 +266,9 @@ pre.code{background:var(--bg);border:1px solid var(--line);border-radius:8px;pad
 .sw span::before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:var(--paper);border-radius:50%;transition:transform .15s;box-shadow:0 1px 2px rgba(0,0,0,.25)}
 .sw input:checked+span{background:var(--em)}
 .sw input:checked+span::before{transform:translateX(18px)}
+.sw.sm{width:34px;height:20px}
+.sw.sm span::before{width:14px;height:14px}
+.sw.sm input:checked+span::before{transform:translateX(14px)}
 .sw input:focus-visible+span{outline:2px solid var(--gold);outline-offset:2px}
 @media print{.savebar,.extabs{display:none!important}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -267,13 +278,20 @@ pre.code{background:var(--bg);border:1px solid var(--line);border-radius:8px;pad
 
 <script>
 /* =========================================================
-   eMarkah SKJB — sistem markah ujian tahunan
+   myMarkah SKJB — sistem markah ujian tahunan
    ---------------------------------------------------------
    KONFIGURASI PENGHOSAN (GitHub Pages / Firebase Hosting):
    Tampal firebaseConfig projek anda di bawah. Jika dibiarkan
    null, aplikasi berjalan dalam MOD DEMO (data dalam pelayar).
    ========================================================= */
-const FIREBASE_CONFIG = null; /* contoh: { apiKey:"...", authDomain:"skjb-icthub.firebaseapp.com", projectId:"skjb-icthub", ... } */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyA4RdKHm5U6wVErFI9L-Y3uYcV59XeXE30",
+  authDomain: "mymarkah.firebaseapp.com",
+  projectId: "mymarkah",
+  storageBucket: "mymarkah.firebasestorage.app",
+  messagingSenderId: "191103615202",
+  appId: "1:191103615202:web:dc0586d3d1d7e12e161ebb"
+};
 const ADMIN_EMAILS = [];      /* emel pentadbir utama, cth: ["pentadbir@moe-dl.edu.my"] */
 const FB_VER = "10.12.2";
 
@@ -415,7 +433,7 @@ const S = {
   mode: "local", db: null, fb: null, user: null, meta: null, tahun: null, cfg: null,
   murid: {}, markah: {}, view: "utama",
   sel: { ujian: null, kelas: null, darjah: null, subjek: null, isiMod: "subjek", an: "kelasD", slipKelas: null, slipMurid: "", muridKelas: null },
-  patch: new Map(), audit: {},
+  patch: new Map(), audit: {}, gs: {}, gsMeta: {},
   parent: { kids: [], cur: 0, ex: null }
 };
 const isAdmin = () => S.user?.peranan === "admin";
@@ -460,16 +478,21 @@ function kira(rec, subjList, cfg = S.cfg) {
   const keputusan = !ada ? "" : !hadir ? "TIDAK HADIR" : gagal ? KEP_GAGAL : "LULUS";
   return { rows, cnt, gagal: gagal ? 1 : 0, jumlah: jum, hadir, ada, purata: hadir ? jum / hadir : null, gp: hadir ? (mata + th * maxM) / (hadir + th) : null, keputusan, analisis, ulasan: rec?.ulasan || "", kehadiran: rec?.hadir || "" };
 }
+/* subjects the admin has chosen to count for ranking (per darjah); others are still on the slip */
+const rankKecuali = d => (S.cfg.rankKecuali?.[d] || []);
+const rankSubjOf = d => subjOf(d).filter(s => !rankKecuali(d).includes(s.kod));
 function rank(list, key) {
-  /* same order as the school's Excel: passing pupils first, then lowest GP, then highest total */
-  const r = list.filter(x => x.k.hadir > 0).sort((a, b) => (a.k.gagal - b.k.gagal) || (a.k.gp - b.k.gp) || (b.k.jumlah - a.k.jumlah) || a.m.nama.localeCompare(b.m.nama));
+  /* same order as the school's Excel: passing pupils first, then lowest GP, then highest total.
+     x.kr = result over ranking subjects only (equals x.k when every subject counts) */
+  const K = x => x.kr || x.k;
+  const r = list.filter(x => K(x).hadir > 0).sort((a, b) => (K(a).gagal - K(b).gagal) || (K(a).gp - K(b).gp) || (K(b).jumlah - K(a).jumlah) || a.m.nama.localeCompare(b.m.nama));
   r.forEach((x, i) => { x[key] = i + 1; x[key + "N"] = r.length; });
 }
 /* results for a whole darjah for one exam (with KDK + KDT) */
 function hasilDarjah(ujian, d) {
-  const subj = subjOf(d); const out = [];
+  const subj = subjOf(d), rs = rankSubjOf(d), semua = rs.length === subj.length; const out = [];
   for (const k of kelasOfDarjah(d)) {
-    const grp = muridOf(k.id).map(m => ({ m, kelas: k, k: kira(recOf(ujian, k.id, m.id), subj) }));
+    const grp = muridOf(k.id).map(m => { const rec = recOf(ujian, k.id, m.id), kk = kira(rec, subj); return { m, kelas: k, k: kk, kr: semua ? kk : kira(rec, rs) }; });
     rank(grp, "kdk"); out.push(...grp);
   }
   rank(out, "kdt"); return out;
@@ -559,10 +582,13 @@ function markDirty(key, mid, path, v) {
 
 async function loadYear(y) {
   S.tahun = String(y);
-  S.cfg = await S.db.get("tahun", S.tahun) || defaultCfg(S.tahun);
-  S.murid = {}; S.markah = {}; S.audit = {}; S.patch.clear();
+  S.cfg = await S.db.get("tahun", S.tahun);
+  if (!S.cfg) { S.cfg = defaultCfg(S.tahun); if (isAdmin()) await S.db.set("tahun", S.tahun, S.cfg).catch(() => { }); } /* first admin login saves the default setup */
+  S.murid = {}; S.markah = {}; S.audit = {}; S.gs = {}; S.gsMeta = {}; S.patch.clear();
   for (const d of await S.db.list("murid", S.tahun + "_")) S.murid[d.id.slice(S.tahun.length + 1)] = d.data.senarai || [];
   for (const d of await S.db.list("markah", S.tahun + "_")) { const key = d.id.slice(S.tahun.length + 1); S.markah[key] = d.data.data || {}; S.audit[key] = d.data.audit || {}; }
+  for (const d of await S.db.list("guruSubjek", S.tahun + "_").catch(() => [])) { const kid = d.id.slice(S.tahun.length + 1); S.gs[kid] = d.data.map || {}; S.gsMeta[kid] = { oleh: d.data.oleh, masa: d.data.masa }; }
+  for (const k of S.cfg.kelas) if (!S.gs[k.id] && S.cfg.guruSubjek?.[k.id]) S.gs[k.id] = { ...S.cfg.guruSubjek[k.id] };
   const sel = S.sel;
   sel.ujian = S.cfg.ujian[0]?.id || null;
   sel.kelas = S.cfg.kelas[0]?.id || null;
@@ -616,11 +642,14 @@ async function seedDemo() {
     }
   }
   const GS = { BM: "CIKGU AZLINA (DEMO)", BI: "CIKGU JENNY ANAK LAING (DEMO)", MT: "CIKGU FARID HAKIMI (DEMO)", SN: "CIKGU MEI LING (DEMO)", SEJ: "CIKGU NURUL AIN (DEMO)", PMZ: "CIKGU DAVID LAWAI (DEMO)" };
-  cfg.guruSubjek = {}; for (const k of cfg.kelas) { cfg.guruSubjek[k.id] = {}; for (const kod in GS) cfg.guruSubjek[k.id][kod] = GS[kod]; }
+  cfg.kelas.find(k => k.id === "k6a").guruEmel = "demo-guru";
+  await db.set("staff", "demo-guru", { nama: cfg.kelas.find(k => k.id === "k6a").guru, peranan: "guru", emel: "demo-guru" });
+  await db.set("staff", "demo", { nama: "PENTADBIR (DEMO)", peranan: "admin", emel: "demo" });
+  for (const k of cfg.kelas) await db.set("guruSubjek", `${y}_${k.id}`, { map: k.id === "k6a" ? { BM: GS.BM, BI: GS.BI, MT: GS.MT } : { ...GS }, guruKelasEmel: k.guruEmel || "", oleh: "PENTADBIR (DEMO)", masa: new Date().toISOString() });
   const au = {}; for (const u in mk) for (const k of cfg.kelas) { const a = au[u + "_" + k.id] = {}; const t = new Date(Date.now() - (u === "U1" ? 60 : 3) * 864e5 - Math.floor(rnd() * 864e5)).toISOString();
     for (const s of cfg.subjek.filter(s => s.darjah.includes(k.darjah))) if (Object.values(mk[u][k.id]).some(r => r.m[s.kod] != null)) a[s.kod] = { nama: GS[s.kod] || k.guru, emel: "demo", masa: t };
     a._ulasan = { nama: k.guru, emel: "demo", masa: t }; }
-  await db.set("app", "meta", { tahunAktif: y, tahunList: [y], demo: true, seedVer: 3 });
+  await db.set("app", "meta", { tahunAktif: y, tahunList: [y], demo: true, seedVer: 5 });
   await db.set("tahun", y, cfg);
   for (const k in murid) await db.set("murid", `${y}_${k}`, { senarai: murid[k] });
   for (const u in mk) for (const k in mk[u]) await db.set("markah", `${y}_${u}_${k}`, { data: mk[u][k], audit: au[u + "_" + k] || {} });
@@ -634,7 +663,7 @@ async function boot() {
     try { S.fb = await loadFirebase(cfg); S.db = new FireDB(S.fb); S.mode = "firebase"; }
     catch (e) { console.error(e); S.mode = "local"; S.db = new LocalDB(); S.fbErr = e.message; }
   } else { S.mode = "local"; S.db = new LocalDB(); }
-  if (S.mode === "local") { const mt = await S.db.get("app", "meta"); if (!mt || (mt.demo && mt.seedVer !== 3)) { LS.keys().filter(k => k && k.startsWith("emarkah:")).forEach(k => LS.del(k)); await seedDemo(); } }
+  if (S.mode === "local") { const mt = await S.db.get("app", "meta"); if (!mt || (mt.demo && mt.seedVer !== 5)) { LS.keys().filter(k => k && k.startsWith("emarkah:")).forEach(k => LS.del(k)); await seedDemo(); } }
   if (S.mode === "firebase") {
     S.fb.onAuthStateChanged(S.fb.auth, async u => {
       if (u && !S.user && u.email) { try { await staffAfterAuth(u.email); } catch (e) { renderLogin(e.message); } }
@@ -646,7 +675,10 @@ async function staffAfterAuth(email) {
   email = email.toLowerCase();
   let st = await S.db.get("staff", email).catch(() => null);
   if (!st && ADMIN_EMAILS.map(x => x.toLowerCase()).includes(email)) { st = { nama: "Pentadbir", peranan: "admin", emel: email }; }
-  if (!st) { await S.fb.signOut(S.fb.auth); throw new Error("Akaun ini belum didaftarkan oleh pentadbir dalam eMarkah."); }
+  if (!st) { /* first login of the root admin named in the Firestore rules: rules allow only that email to create its own admin record */
+    const rec = { nama: "PENTADBIR", peranan: "admin", emel: email };
+    try { await S.db.set("staff", email, rec); st = rec; } catch (e) { } }
+  if (!st) { await S.fb.signOut(S.fb.auth); throw new Error(`Akaun ${email} belum didaftarkan dalam myMarkah. Minta pentadbir mendaftarkan emel DELIMa anda di Tetapan → Pengguna.`); }
   S.user = { ...st, emel: email };
   if (st.peranan === "admin") S.db.list("staff").then(l => S.staffNames = l.map(x => x.data.nama)).catch(() => { });
   S.meta = await S.db.get("app", "meta") || { tahunAktif: String(new Date().getFullYear()), tahunList: [String(new Date().getFullYear())] };
@@ -665,7 +697,7 @@ function renderLogin(err) {
     <div class="login-hero">
       <div class="stack" style="gap:10px">
         <div class="eyebrow" style="color:inherit;opacity:.8">SK Jalan Bintang · Miri</div>
-        <h1>eMarkah</h1>
+        <h1>myMarkah</h1>
         <p style="margin:0;opacity:.88;max-width:34ch">Rekod markah ujian sepanjang tahun, analisis subjek, kelas dan darjah, serta semakan keputusan untuk ibu bapa.</p>
       </div>
       <div class="grid-deco" aria-hidden="true">${deco}</div>
@@ -684,12 +716,17 @@ function renderLogin(err) {
           <button class="btn pri" id="dAdmin">Masuk sebagai Pentadbir (demo)</button>
           <button class="btn" id="dGuru">Masuk sebagai Guru (demo)</button>
         </div>` : `
-        <form id="fStaff" class="stack" style="gap:12px">
-          <label class="f">Emel (DELIMa)<input class="inp" id="lgEmail" type="email" autocomplete="username" required></label>
-          <label class="f">Kata laluan<input class="inp" id="lgPw" type="password" autocomplete="current-password" required></label>
-          <button class="btn pri" type="submit">Log masuk</button>
-          <button class="btn sm" type="button" id="lgReset" style="justify-self:start">Lupa kata laluan</button>
-        </form>`) : `
+        <div class="stack" style="gap:12px">
+          <button class="btn pri gbtn" type="button" id="lgGoogle"><span class="gdot" aria-hidden="true">G</span>Log masuk dengan Google (DELIMa)</button>
+          <p class="muted small" style="margin:0">Pilih akaun DELIMa anda (@moe-dl.edu.my). Tiada kata laluan baharu diperlukan. Hanya guru yang didaftarkan oleh pentadbir boleh masuk.</p>
+          <details><summary class="small">Log masuk dengan emel &amp; kata laluan</summary>
+          <form id="fStaff" class="stack" style="gap:12px;margin-top:10px">
+            <label class="f">Emel (DELIMa)<input class="inp" id="lgEmail" type="email" autocomplete="username" required></label>
+            <label class="f">Kata laluan<input class="inp" id="lgPw" type="password" autocomplete="current-password" required></label>
+            <button class="btn" type="submit">Log masuk</button>
+            <button class="btn sm" type="button" id="lgReset" style="justify-self:start">Lupa kata laluan</button>
+          </form></details>
+        </div>`) : `
         <form id="fParent" class="stack" style="gap:12px">
           <p class="muted small" style="margin:0">Masukkan No. MyKid / Kad Pengenalan anak dan PIN semakan yang diberi oleh sekolah.</p>
           <label class="f">No. MyKid / KP murid<input class="inp" id="pIc" inputmode="numeric" placeholder="cth: 140510139001" required></label>
@@ -704,6 +741,17 @@ function renderLogin(err) {
     $("#dAdmin").onclick = () => demoLogin("admin");
     $("#dGuru").onclick = () => demoLogin("guru");
   }
+  if ($("#lgGoogle")) $("#lgGoogle").onclick = async () => {
+    const pr = new S.fb.GoogleAuthProvider(); pr.setCustomParameters({ hd: "moe-dl.edu.my", prompt: "select_account" });
+    try { await S.fb.signInWithPopup(S.fb.auth, pr); }
+    catch (e) {
+      if (["auth/popup-blocked", "auth/operation-not-supported-in-this-environment"].includes(e.code)) return S.fb.signInWithRedirect(S.fb.auth, pr);
+      if (["auth/popup-closed-by-user", "auth/cancelled-popup-request"].includes(e.code)) return;
+      renderLogin(e.code === "auth/operation-not-allowed" ? "Log masuk Google belum dihidupkan. Pentadbir perlu hidupkan Google di Firebase → Authentication → Sign-in method."
+        : e.code === "auth/unauthorized-domain" ? "Alamat laman ini belum dibenarkan. Pentadbir perlu tambah domain di Firebase → Authentication → Settings → Authorized domains."
+        : "Log masuk Google gagal: " + e.message);
+    }
+  };
   if ($("#fStaff")) {
     $("#fStaff").onsubmit = async e => {
       e.preventDefault();
@@ -722,7 +770,9 @@ function renderLogin(err) {
 }
 async function demoLogin(role) {
   S.user = role === "admin" ? { nama: "Pentadbir (demo)", peranan: "admin", emel: "demo" } : { nama: "Guru (demo)", peranan: "guru", emel: "demo-guru" };
-  S.meta = await S.db.get("app", "meta"); await loadYear(S.meta.tahunAktif); render();
+  S.meta = await S.db.get("app", "meta"); await loadYear(S.meta.tahunAktif);
+  if (role !== "admin") { const k = S.cfg.kelas.find(x => x.guruEmel === "demo-guru"); if (k) S.user.nama = k.guru; }
+  render();
 }
 async function logout() {
   if (S.mode === "firebase") await S.fb.signOut(S.fb.auth);
@@ -732,14 +782,14 @@ async function logout() {
 /* ---------------- shell ---------------- */
 const NAV = [
   ["utama", "Utama", "◆"], ["isi", "Isi Markah", "✎"], ["analisis", "Analisis", "▤"], ["graf", "Graf Analisis", "▥"],
-  ["slip", "Slip Keputusan", "▭"], ["murid", "Murid & PIN", "☰"], ["semakan", "Semakan", "✓", true], ["tetapan", "Tetapan", "⚙", true]
+  ["slip", "Slip Keputusan", "▭"], ["murid", "Murid & PIN", "☰"], ["kelassaya", "Kelas Saya", "★", "gk"], ["semakan", "Semakan", "✓", true], ["tetapan", "Tetapan", "⚙", true]
 ];
 function render() {
   if (!S.user) return renderLogin();
   const v = S.view;
   $("#app").innerHTML = `
   <header class="top">
-    <div class="brand">eMarkah<small>${esc(S.cfg.sekolah.nama)}</small></div>
+    <div class="brand">myMarkah<small>${esc(S.cfg.sekolah.nama)}</small></div>
     <div class="grow"></div>
     <label class="small">Tahun <select id="tYear" aria-label="Tahun">${S.meta.tahunList.map(y => `<option ${y === S.tahun ? "selected" : ""}>${y}</option>`).join("")}</select></label>
     <span class="who">${esc(S.user.nama)} · ${isAdmin() ? "Pentadbir" : "Guru"}${S.mode === "local" ? " · DEMO" : ""}</span>
@@ -747,7 +797,7 @@ function render() {
     <button class="btn sm" id="tOut">Log keluar</button>
   </header>
   <div class="shell">
-    <nav class="nav" aria-label="Menu">${NAV.filter(n => !n[3] || isAdmin()).map(n => `<button data-v="${n[0]}" class="${v === n[0] ? "on" : ""}"><span class="ico">${n[2]}</span>${n[1]}</button>`).join("")}</nav>
+    <nav class="nav" aria-label="Menu">${NAV.filter(n => !n[3] || (n[3] === "gk" ? myKelas().length > 0 : isAdmin())).map(n => `<button data-v="${n[0]}" class="${v === n[0] ? "on" : ""}"><span class="ico">${n[2]}</span>${n[1]}</button>`).join("")}</nav>
     <main class="main" id="main"></main>
   </div>`;
   $("#tOut").onclick = async () => { if (await guardUnsaved()) logout(); };
@@ -819,7 +869,7 @@ function exTabs(id, kelas) {
       <span class="ex-m">${u.kunci ? "Dikunci" : "Dibuka"}${p ? ` · ${fmt(pc(p.done, p.need), 0)}% diisi` : ""}</span></button>`;
   }).join("")}</div>`;
 }
-const guruSubjek = (kid, kod) => S.cfg.guruSubjek?.[kid]?.[kod] || "";
+const guruSubjek = (kid, kod) => S.gs[kid]?.[kod] || "";
 function auditTxt(key, kod) {
   const a = (S.audit[key] || {})[kod];
   return a ? `Kemas kini terakhir oleh <b>${esc(a.nama)}</b> · ${esc(fmtMasa(a.masa))}` : `<span class="muted">Belum pernah disimpan</span>`;
@@ -997,9 +1047,10 @@ VIEWS.analisis = el => {
   }
   if (tab === "pelajar") {
     const sorted = rows.slice().sort((a, b) => (a.kdt || 1e9) - (b.kdt || 1e9) || a.m.nama.localeCompare(b.m.nama));
-    html += `<div class="panel"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3>Kedudukan murid Tahun ${d}</h3><input class="inp noprint" id="aQ" placeholder="Cari nama atau kelas" style="width:240px"></div><div class="tw" style="max-height:72vh"><table class="t" id="aTbl"><thead><tr><th>KDT</th><th class="l">Nama murid</th><th class="l">Kelas</th><th>Jumlah</th><th>Purata %</th><th>GP</th><th>Keputusan</th><th>KDK</th><th class="l">Analisis</th></tr></thead><tbody>
-      ${sorted.map(r => `<tr data-q="${esc((r.m.nama + " " + r.kelas.nama).toLowerCase())}"><td class="num"><b>${r.kdt ? r.kdt + "/" + r.kdtN : "–"}</b></td><td class="l name">${esc(r.m.nama)}</td><td class="l">${esc(r.kelas.nama)}</td><td class="num">${r.k.hadir ? r.k.jumlah : "–"}</td><td class="num">${fmt(r.k.purata)}</td><td class="num"><b>${fmt(r.k.gp)}</b></td><td>${kepPill(r.k.keputusan)}</td><td class="num">${r.kdk ? r.kdk + "/" + r.kdkN : "–"}</td><td class="l small">${esc(r.k.analisis)}</td></tr>`).join("")}
-      </tbody></table></div><p class="muted small" style="margin:8px 0 0">Kedudukan disusun mengikut GP terendah, kemudian jumlah markah tertinggi.</p></div>`;
+    const exK = rankKecuali(d).filter(kod => subj.some(s => s.kod === kod)), adaEx = exK.length > 0;
+    html += `<div class="panel"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3>Kedudukan murid Tahun ${d}</h3><input class="inp noprint" id="aQ" placeholder="Cari nama atau kelas" style="width:240px"></div><div class="tw" style="max-height:72vh"><table class="t" id="aTbl"><thead><tr><th>KDT</th><th class="l">Nama murid</th><th class="l">Kelas</th><th>Jumlah</th><th>Purata %</th><th>GP</th>${adaEx ? `<th title="GP bagi subjek yang dikira untuk kedudukan sahaja">GP kedudukan</th>` : ""}<th>Keputusan</th><th>KDK</th><th class="l">Analisis</th></tr></thead><tbody>
+      ${sorted.map(r => `<tr data-q="${esc((r.m.nama + " " + r.kelas.nama).toLowerCase())}"><td class="num"><b>${r.kdt ? r.kdt + "/" + r.kdtN : "–"}</b></td><td class="l name">${esc(r.m.nama)}</td><td class="l">${esc(r.kelas.nama)}</td><td class="num">${r.k.hadir ? r.k.jumlah : "–"}</td><td class="num">${fmt(r.k.purata)}</td><td class="num"><b>${fmt(r.k.gp)}</b></td>${adaEx ? `<td class="num">${fmt(r.kr.gp)}</td>` : ""}<td>${kepPill(r.k.keputusan)}</td><td class="num">${r.kdk ? r.kdk + "/" + r.kdkN : "–"}</td><td class="l small">${esc(r.k.analisis)}</td></tr>`).join("")}
+      </tbody></table></div><p class="muted small" style="margin:8px 0 0">Kedudukan disusun: murid lulus dahulu, kemudian GP terendah, kemudian jumlah markah tertinggi. ${adaEx ? `Subjek <b>tidak</b> dikira untuk kedudukan Tahun ${d}: ${exK.map(esc).join(", ")} (ditetapkan oleh pentadbir).` : `Semua subjek dikira.`}</p></div>`;
   }
   if (tab === "banding") {
     const per = c.ujian.map(x => ({ u: x, rows: hasilDarjah(x.id, d) }));
@@ -1173,12 +1224,12 @@ VIEWS.semakan = el => {
   $$("#smTabs button").forEach(b => b.onclick = () => { S.sel.ujian = b.dataset.u; render(); });
   $$("[data-cell]").forEach(b => b.onclick = () => { const [kid, kod] = b.dataset.cell.split("|"); semakanCell(u, data.find(x => x.k.id === kid && x.s.kod === kod)); });
   $("#smCopy") && ($("#smCopy").onclick = async () => {
-    const txt = `*Peringatan isian markah ${u.nama} ${S.tahun}*\n${c.sekolah.nama}\n\n` + guruKeys.map(g => `${g}\n` + byGuru[g].map(x => `- ${x.k.nama} ${x.s.kod}: ${x.kosong.length}/${x.bil} murid belum diisi`).join("\n")).join("\n\n") + `\n\nSila lengkapkan dalam eMarkah dan tekan Simpan. Terima kasih.`;
+    const txt = `*Peringatan isian markah ${u.nama} ${S.tahun}*\n${c.sekolah.nama}\n\n` + guruKeys.map(g => `${g}\n` + byGuru[g].map(x => `- ${x.k.nama} ${x.s.kod}: ${x.kosong.length}/${x.bil} murid belum diisi`).join("\n")).join("\n\n") + `\n\nSila lengkapkan dalam myMarkah dan tekan Simpan. Terima kasih.`;
     try { await navigator.clipboard.writeText(txt); toast("Senarai disalin."); } catch (e) { modal(`<h3>Salin teks ini</h3><textarea class="inp" rows="12" style="width:100%">${esc(txt)}</textarea><div class="row" style="justify-content:flex-end"><button class="btn" data-close>Tutup</button></div>`, b => $("textarea", b).select()); }
   });
 };
 function semakanCell(u, x) {
-  const names = [...new Set([...S.cfg.kelas.map(k => k.guru), ...Object.values(S.cfg.guruSubjek || {}).flatMap(o => Object.values(o)), ...Object.values(S.audit).flatMap(a => Object.values(a).map(v => v.nama)), ...(S.staffNames || [])].filter(Boolean))].sort();
+  const names = namaGuruSemua();
   modal(`<div class="row"><h3 class="grow">${esc(x.k.nama)} · ${esc(x.s.nama)}</h3><span class="pill ${x.isi === x.bil ? "ok" : x.isi ? "mid" : "no"}">${x.isi}/${x.bil} diisi</span></div>
     <div class="small">${esc(u.nama)} · ${x.a ? `Kemas kini terakhir oleh <b>${esc(x.a.nama)}</b> · ${esc(fmtMasa(x.a.masa))}` : "Belum pernah disimpan"}</div>
     <label class="f">Guru subjek<input class="inp" id="cG" list="cGl" value="${esc(guruSubjek(x.k.id, x.s.kod))}" placeholder="Nama guru yang mengajar subjek ini" style="text-transform:uppercase"></label>
@@ -1187,14 +1238,74 @@ function semakanCell(u, x) {
     ${x.kosong.length ? `<div><div class="eyebrow" style="margin-bottom:6px">Murid belum diisi (${x.kosong.length})</div><div class="tw" style="max-height:240px"><table class="t"><tbody>${x.kosong.map((m, i) => `<tr><td>${i + 1}</td><td class="l">${esc(m.nama)}</td></tr>`).join("")}</tbody></table></div></div>` : `<p class="muted" style="margin:0">Semua murid telah diisi.</p>`}
     <div class="row" style="justify-content:flex-end"><button class="btn" id="cOpen">Buka di Isi Markah</button><button class="btn" data-close>Tutup</button><button class="btn pri" id="cSave">Simpan guru subjek</button></div>`, (box, close) => {
     $("#cSave", box).onclick = async () => {
-      const g = $("#cG", box).value.trim().toUpperCase(); const c = S.cfg; c.guruSubjek = c.guruSubjek || {};
+      const g = $("#cG", box).value.trim().toUpperCase();
       const targets = $("#cAll", box).checked ? kelasOfDarjah(x.d) : [x.k];
-      for (const k of targets) { c.guruSubjek[k.id] = c.guruSubjek[k.id] || {}; if (g) c.guruSubjek[k.id][x.s.kod] = g; else delete c.guruSubjek[k.id][x.s.kod]; }
-      await saveCfg(); close(); toast("Guru subjek disimpan."); render();
+      for (const k of targets) { S.gs[k.id] = { ...(S.gs[k.id] || {}) }; if (g) S.gs[k.id][x.s.kod] = g; else delete S.gs[k.id][x.s.kod]; await saveGS(k.id); }
+      close(); toast("Guru subjek disimpan."); render();
     };
     $("#cOpen", box).onclick = () => { close(); Object.assign(S.sel, { kelas: x.k.id, subjek: x.s.kod, isiMod: "subjek", ujian: u.id, isiDarjah: x.d }); S.view = "isi"; render(); };
   });
 }
+
+/* ---------------- GURU SUBJEK (admin + guru kelas) ----------------
+   Stored per class in guruSubjek/{tahun}_{kelasId} = { map:{BM:"NAMA"}, guruKelasEmel, oleh, masa }.
+   Admin can edit every class; a class teacher (kelas.guruEmel = their login email) can edit their own. */
+const myKelas = () => S.cfg.kelas.filter(k => k.guruEmel && S.user?.emel && k.guruEmel.toLowerCase() === String(S.user.emel).toLowerCase());
+const bolehUbahGS = k => isAdmin() || myKelas().some(x => x.id === k.id);
+async function saveGS(kid) {
+  const k = kelasById(kid); if (!k) return;
+  await S.db.set("guruSubjek", `${S.tahun}_${kid}`, { map: S.gs[kid] || {}, guruKelasEmel: (k.guruEmel || "").toLowerCase(), oleh: S.user?.nama || "", masa: new Date().toISOString() });
+  S.gsMeta[kid] = { oleh: S.user?.nama || "", masa: new Date().toISOString() };
+}
+function namaGuruSemua() {
+  return [...new Set([...S.cfg.kelas.map(k => k.guru), ...Object.values(S.gs).flatMap(o => Object.values(o)), ...Object.values(S.audit).flatMap(a => Object.values(a).map(v => v.nama)), ...(S.staffNames || [])]
+    .filter(n => n && !/\(import Excel\)$/.test(n)).map(n => n.toUpperCase()))].sort();
+}
+function gsEditor(box, list, st) {
+  /* st: {darjah, kelas} selection kept by caller */
+  if (!list.length) { box.innerHTML = `<p class="muted">Tiada kelas.</p>`; return; }
+  const ds = [...new Set(list.map(k => +k.darjah))].sort((a, b) => a - b);
+  if (!ds.includes(+st.darjah)) st.darjah = ds[0];
+  const kls = list.filter(k => +k.darjah === +st.darjah).sort((a, b) => a.nama.localeCompare(b.nama));
+  if (!kls.find(k => k.id === st.kelas)) st.kelas = kls[0].id;
+  const k = kelasById(st.kelas); const subj = subjOf(k.darjah); const u = S.cfg.ujian.find(x => x.id === S.sel.ujian) || S.cfg.ujian[0];
+  const map = { ...(S.gs[k.id] || {}) }; const meta = S.gsMeta[k.id]; const boleh = bolehUbahGS(k);
+  box.innerHTML = `
+    ${ds.length > 1 ? `<div class="toolbar"><label class="f">Darjah<select class="inp" id="gsD">${ds.map(d => `<option value="${d}" ${d === +st.darjah ? "selected" : ""}>Tahun ${d}</option>`).join("")}</select></label></div>` : ""}
+    ${kls.length > 1 ? `<div class="ktabs" id="gsK">${kls.map(x => { const n = subjOf(x.darjah).filter(s => (S.gs[x.id] || {})[s.kod]).length; return `<button class="${x.id === k.id ? "on" : ""}" data-k="${x.id}"><span class="kn">${esc(pendekKelas(x.nama))}</span><span class="km">${n}/${subjOf(x.darjah).length} guru ditetapkan</span></button>`; }).join("")}</div>` : ""}
+    <div class="auditbar"><div><span class="eyebrow">${esc(k.nama)}</span><div>Guru kelas: <b>${esc(k.guru || "–")}</b></div></div><div class="small muted">${meta?.masa ? `Senarai dikemas kini oleh ${esc(meta.oleh)} · ${esc(fmtMasa(meta.masa))}` : "Senarai guru subjek belum pernah disimpan"}</div></div>
+    <datalist id="gsList">${namaGuruSemua().map(n => `<option value="${esc(n)}">`).join("")}</datalist>
+    <div class="tw"><table class="t"><thead><tr><th class="l">Kod</th><th class="l">Subjek</th><th class="l">Guru subjek</th><th>Isian ${esc(u?.nama || "")}</th><th class="l">Kemas kini markah terakhir</th></tr></thead><tbody>
+      ${subj.map(s => { const p = u ? isiKiraan(u.id, k, s.kod) : { done: 0, need: 0 }; const a = u ? (S.audit[mkKey(u.id, k.id)] || {})[s.kod] : null;
+        return `<tr><td class="l"><b>${esc(s.kod)}</b></td><td class="l">${esc(s.nama)}${s.pilihan ? ` <span class="muted small">(pilihan)</span>` : ""}</td>
+        <td class="l"><input class="inp gs-in" list="gsList" data-gs="${esc(s.kod)}" value="${esc(map[s.kod] || "")}" placeholder="Nama guru" style="width:280px;text-transform:uppercase" ${boleh ? "" : "disabled"}></td>
+        <td class="num">${p.need ? `${p.done}/${p.need}` : "–"}</td><td class="l small">${a ? `${esc(a.nama)} · ${esc(fmtMasa(a.masa))}` : `<span class="muted">–</span>`}</td></tr>`; }).join("")}
+    </tbody></table></div>
+    ${boleh ? `<div class="savebar" id="gsBar"><span id="gsSt" class="save-st">Tiada perubahan.</span><span class="grow"></span><button class="btn" id="gsKelasGuru" title="Isi semua subjek kosong dengan nama guru kelas">Isi kosong dengan guru kelas</button><button class="btn pri" id="gsSave" disabled>Simpan guru subjek</button></div>` : `<p class="muted small">Hanya pentadbir atau guru kelas ${esc(k.nama)} boleh mengubah senarai ini.</p>`}`;
+  const rerender = () => gsEditor(box, list, st);
+  let dirty = false;
+  const markGS = () => { dirty = true; $("#gsSave", box).disabled = false; $("#gsBar", box).classList.add("dirty"); $("#gsSt", box).textContent = "Ada perubahan belum disimpan."; };
+  const leave = async () => !dirty || await ask("Perubahan guru subjek belum disimpan. Buang perubahan?", "Buang");
+  $("#gsD", box) && ($("#gsD", box).onchange = async e => { if (!(await leave())) { e.target.value = st.darjah; return; } st.darjah = +e.target.value; rerender(); });
+  $$("#gsK button", box).forEach(b => b.onclick = async () => { if (!(await leave())) return; st.kelas = b.dataset.k; rerender(); });
+  $$(".gs-in", box).forEach(i => i.oninput = () => { i.classList.add("chg"); markGS(); });
+  $("#gsKelasGuru", box) && ($("#gsKelasGuru", box).onclick = () => { if (!k.guru) return toast("Nama guru kelas belum ditetapkan."); $$(".gs-in", box).forEach(i => { if (!i.value.trim()) { i.value = k.guru; i.classList.add("chg"); markGS(); } }); });
+  $("#gsSave", box) && ($("#gsSave", box).onclick = async () => {
+    const m = {}; $$(".gs-in", box).forEach(i => { const v = i.value.trim().toUpperCase(); if (v) m[i.dataset.gs] = v; });
+    const old = S.gs[k.id]; S.gs[k.id] = m;
+    try { await saveGS(k.id); dirty = false; toast("Guru subjek disimpan."); rerender(); }
+    catch (e) { S.gs[k.id] = old; toast(/permission|insufficient/i.test(e.message) ? "Tiada kebenaran. Minta pentadbir semak emel guru kelas di Tetapan → Kelas." : "Gagal simpan: " + e.message); }
+  });
+}
+VIEWS.kelassaya = el => {
+  const ks = myKelas();
+  if (!ks.length) { el.innerHTML = emptyState("Anda belum ditetapkan sebagai guru kelas.", `<p class="muted" style="margin:0">Pentadbir boleh menetapkan emel anda sebagai guru kelas di Tetapan → Kelas.</p>`); return; }
+  S.sel.gsSaya = S.sel.gsSaya || {};
+  el.innerHTML = `<div class="head"><div><div class="eyebrow">Kelas saya · Guru kelas</div><h2>${ks.map(k => esc(k.nama)).join(", ")}</h2></div></div>
+    <p class="muted small" style="margin:0">Tetapkan guru subjek bagi kelas anda. Nama guru subjek dipaparkan di Isi Markah dan digunakan oleh pentadbir dalam Semakan untuk menghantar peringatan.</p>
+    <div id="gsBox" class="stack"></div>`;
+  gsEditor($("#gsBox"), ks, S.sel.gsSaya);
+};
 
 /* ---------------- SLIP ---------------- */
 const SLIP_ITEMS = [
@@ -1442,7 +1553,7 @@ function renderParent() {
   const subjects = []; exs.forEach(e => e.k.rows.forEach(r => { if (!subjects.find(s => s.kod === r.kod)) subjects.push({ kod: r.kod, nama: r.nama }); }));
   const exCol = ["var(--gold)", "var(--em)", "var(--gB)", "var(--gD)"];
   $("#app").innerHTML = `
-  <header class="top"><div class="brand">eMarkah<small>Portal Ibu Bapa · ${esc(doc.sekolah.nama)}</small></div><div class="grow"></div><button class="btn sm" id="pAdd">Tambah anak</button><button class="btn sm" id="pOut">Keluar</button></header>
+  <header class="top"><div class="brand">myMarkah<small>Portal Ibu Bapa · ${esc(doc.sekolah.nama)}</small></div><div class="grow"></div><button class="btn sm" id="pAdd">Tambah anak</button><button class="btn sm" id="pOut">Keluar</button></header>
   <main class="main" style="max-width:980px;margin:0 auto;width:100%">
     ${P.kids.length > 1 ? `<div class="kids">${P.kids.map((k, i) => `<button class="kid ${i === P.cur ? "on" : ""}" data-kid="${i}"><b>${esc(k.docs[0].nama)}</b><span class="small muted">${esc(k.docs[0].kelas)}</span></button>`).join("")}</div>` : ""}
     <div class="head"><div><div class="eyebrow">Keputusan ${esc(doc.tahun)}</div><h2>${esc(doc.nama)}</h2><div class="muted">${esc(doc.kelas)} · Guru kelas: ${esc(doc.guru || "–")}</div></div>
@@ -1466,38 +1577,52 @@ function renderParent() {
 VIEWS.tetapan = el => {
   if (!isAdmin()) { el.innerHTML = emptyState("Hanya pentadbir boleh mengubah tetapan."); return; }
   const c = S.cfg; const nU = c.ujian.length;
+  const ST = [["ujian", "Ujian & portal"], ["sekolah", "Sekolah & tahun"], ["kelas", "Kelas"], ["guru", "Guru subjek"], ["subjek", "Subjek"], ["kedudukan", "Kedudukan"], ["slip", "Paparan slip"], ["gred", "Gred & ulasan"], ["pengguna", "Pengguna"], ["data", "Pangkalan data"]];
+  if (!ST.find(t => t[0] === S.sel.setTab)) S.sel.setTab = "ujian";
   el.innerHTML = `<div class="head"><div><div class="eyebrow">Pentadbir</div><h2>Tetapan tahun ${S.tahun}</h2></div></div>
-  <div class="panel stack"><h3>Ujian sepanjang tahun</h3>
+  <div class="settabs" role="tablist" id="setTabs">${ST.map(t => `<button role="tab" data-t="${t[0]}" class="${t[0] === S.sel.setTab ? "on" : ""}" aria-selected="${t[0] === S.sel.setTab}">${t[1]}</button>`).join("")}</div>
+  <div class="panel stack" data-st="ujian"><h3>Ujian sepanjang tahun</h3>
     <div class="row"><span>Bilangan ujian tahun ini:</span><div class="seg" id="nU">${[1, 2, 3, 4].map(n => `<button data-n="${n}" class="${n === nU ? "on" : ""}">${n}</button>`).join("")}</div></div>
     <div class="tw"><table class="t"><thead><tr><th>Bil</th><th class="l">Nama ujian</th><th>Kunci isian</th><th>Terbit kepada ibu bapa</th><th>Isian</th></tr></thead><tbody>
       ${c.ujian.map((u, i) => { let n = 0; c.kelas.forEach(k => n += Object.keys(S.markah[mkKey(u.id, k.id)] || {}).length); return `<tr><td>${i + 1}</td><td class="l"><input class="inp" data-un="${i}" value="${esc(u.nama)}" style="width:220px"></td><td><label class="chk"><input type="checkbox" data-uk="${i}" ${u.kunci ? "checked" : ""}> Kunci</label></td><td><label class="chk"><input type="checkbox" data-ut="${i}" ${u.terbit ? "checked" : ""}> Terbit</label></td><td class="num">${n} murid</td></tr>`; }).join("")}
     </tbody></table></div>
     <div class="row"><button class="btn gold" id="pub">Kemas kini portal ibu bapa</button><span class="muted small">${c.portalDikemas ? "Kali terakhir: " + new Date(c.portalDikemas).toLocaleString("ms-MY") : "Belum pernah diterbitkan."} Klik selepas markah disahkan, selepas menukar status Terbit, atau selepas menukar PIN.</span></div>
   </div>
-  <div class="panel stack"><h3>Paparan slip keputusan</h3>
+  <div class="panel stack" data-st="slip"><h3>Paparan slip keputusan</h3>
     <p class="muted small" style="margin:0">Hidupkan atau matikan maklumat pada slip (cetakan guru dan portal ibu bapa). Disimpan serta-merta. Klik <b>Kemas kini portal ibu bapa</b> supaya ibu bapa melihat perubahan.</p>
     <div class="slipset"><div class="toggles">${SLIP_ITEMS.map(([kk, l]) => `<label><span>${l}</span><span class="sw"><input type="checkbox" data-sl="${kk}" ${slipOpt()[kk] ? "checked" : ""}><span></span></span></label>`).join("")}</div>
     <div><div class="eyebrow" style="margin-bottom:6px">Pratonton</div><div id="slipPrev"></div></div></div></div>
-  <div class="grid2">
+  <div class="grid2" data-st="sekolah">
     <div class="panel stack"><h3>Maklumat sekolah</h3>
       <label class="f">Nama sekolah<input class="inp" id="sN" value="${esc(c.sekolah.nama)}"></label>
       <label class="f">Alamat ringkas<input class="inp" id="sA" value="${esc(c.sekolah.alamat)}"></label>
       <label class="f">Nama Guru Besar (untuk slip)<input class="inp" id="sG" value="${esc(c.sekolah.gb)}"></label>
-      <label class="f">Alamat laman eMarkah (untuk slip PIN)<input class="inp" id="sU" value="${esc(c.sekolah.url || "")}" placeholder="https://skjalanbintang.github.io/…"></label>
+      <label class="f">Alamat laman myMarkah (untuk slip PIN)<input class="inp" id="sU" value="${esc(c.sekolah.url || "")}" placeholder="https://destarx.github.io/mymarkah/"></label>
       <button class="btn pri" id="sSave" style="justify-self:start">Simpan</button></div>
     <div class="panel stack"><h3>Tahun akademik</h3>
       <p class="muted small" style="margin:0">Tahun aktif: <b>${esc(S.meta.tahunAktif)}</b>. Tahun baharu menyalin tetapan (subjek, kelas, skala, nama ujian). Murid dan markah bermula kosong; import senarai murid baharu selepas itu. Data tahun lepas kekal dan boleh dipilih di bar atas.</p>
       <div class="row"><input class="inp" id="nY" value="${+S.meta.tahunList.slice().sort().at(-1) + 1}" style="width:100px"><button class="btn" id="nYGo">Mula tahun baharu</button></div></div>
   </div>
-  <div class="panel stack"><h3>Kelas</h3>
-    <div class="tw"><table class="t"><thead><tr><th class="l">Nama kelas</th><th>Darjah</th><th class="l">Guru kelas</th><th>Murid</th><th></th></tr></thead><tbody>
-      ${c.kelas.map((k, i) => `<tr><td class="l"><input class="inp" data-kn="${i}" value="${esc(k.nama)}"></td><td><select class="inp" data-kd="${i}">${ALL.map(d => `<option ${+k.darjah === d ? "selected" : ""}>${d}</option>`).join("")}</select></td><td class="l"><input class="inp" data-kg="${i}" value="${esc(k.guru || "")}" style="width:260px"></td><td>${muridOf(k.id).length}</td><td><button class="btn sm danger" data-kx="${i}">Padam</button></td></tr>`).join("")}
+  <div class="panel stack" data-st="kelas"><h3>Kelas</h3>
+    <p class="muted small" style="margin:0">Isikan emel DELIMa guru kelas supaya guru itu boleh menetapkan guru subjek bagi kelasnya melalui menu <b>Kelas Saya</b>.</p>
+    <div class="tw"><table class="t"><thead><tr><th class="l">Nama kelas</th><th>Darjah</th><th class="l">Guru kelas</th><th class="l">Emel guru kelas (DELIMa)</th><th>Murid</th><th></th></tr></thead><tbody>
+      ${c.kelas.map((k, i) => `<tr><td class="l"><input class="inp" data-kn="${i}" value="${esc(k.nama)}"></td><td><select class="inp" data-kd="${i}">${ALL.map(d => `<option ${+k.darjah === d ? "selected" : ""}>${d}</option>`).join("")}</select></td><td class="l"><input class="inp" data-kg="${i}" value="${esc(k.guru || "")}" style="width:240px"></td><td class="l"><input class="inp" type="email" data-ke="${i}" value="${esc(k.guruEmel || "")}" placeholder="nama@moe-dl.edu.my" style="width:230px"></td><td>${muridOf(k.id).length}</td><td><button class="btn sm danger" data-kx="${i}">Padam</button></td></tr>`).join("")}
     </tbody></table></div><div class="row"><button class="btn" id="kAdd">Tambah kelas</button><button class="btn pri" id="kSave">Simpan kelas</button><button class="btn" id="kImp">Import Excel</button></div></div>
-  <div class="panel stack"><h3>Subjek</h3>
+  <div class="panel stack" data-st="guru"><h3>Guru subjek mengikut kelas</h3>
+    <p class="muted small" style="margin:0">Pentadbir boleh menetapkan guru subjek bagi semua kelas. Guru kelas juga boleh menetapkannya bagi kelas sendiri (menu Kelas Saya).</p>
+    <div id="gsBox" class="stack"></div></div>
+  <div class="panel stack" id="rkPanel" data-st="kedudukan"><h3>Subjek dikira untuk kedudukan (KDK &amp; KDT)</h3>
+    <p class="muted small" style="margin:0">Matikan suis bagi subjek yang tidak mahu diambil kira semasa menyusun kedudukan murid dalam kelas dan darjah. Jumlah markah, GP, analisis dan keputusan pada slip tetap dikira daripada semua subjek. Disimpan serta-merta; klik <b>Kemas kini portal ibu bapa</b> selepas itu.</p>
+    <div class="tw"><table class="t"><thead><tr><th class="l sticky">Darjah</th>${c.subjek.map(s => `<th title="${esc(s.nama)}">${esc(s.kod)}</th>`).join("")}<th>Dikira</th><th></th></tr></thead><tbody>
+      ${ALL.map(d => { const sd = subjOf(d).map(s => s.kod), ex = rankKecuali(d); return `<tr><td class="l sticky"><b>Tahun ${d}</b></td>${c.subjek.map(s => sd.includes(s.kod) ? `<td><label class="sw sm" title="${esc(s.nama)} · Tahun ${d}"><input type="checkbox" data-rk="${d}|${esc(s.kod)}" aria-label="Kira ${esc(s.nama)} untuk kedudukan Tahun ${d}" ${ex.includes(s.kod) ? "" : "checked"}><span></span></label></td>` : `<td class="muted">–</td>`).join("")}<td class="num" data-rkn="${d}">${sd.filter(x => !ex.includes(x)).length}/${sd.length}</td><td><button class="btn sm" data-rall="${d}">Kira semua</button></td></tr>`; }).join("")}
+    </tbody></table></div>
+    <label class="chk"><input type="checkbox" id="rkSemua"> Gunakan setiap perubahan suis pada semua darjah</label>
+  </div>
+  <div class="panel stack" data-st="subjek"><h3>Subjek</h3>
     <div class="tw"><table class="t"><thead><tr><th class="l">Kod</th><th class="l">Nama subjek</th><th>Darjah</th><th>Pilihan</th><th></th></tr></thead><tbody>
       ${c.subjek.map((s, i) => `<tr><td class="l"><input class="inp" data-sk="${i}" value="${esc(s.kod)}" style="width:80px"></td><td class="l"><input class="inp" data-sn="${i}" value="${esc(s.nama)}" style="width:300px"></td><td>${ALL.map(d => `<label class="chk"><input type="checkbox" data-sd="${i}" value="${d}" ${(s.darjah || ALL).map(Number).includes(d) ? "checked" : ""}>${d}</label>`).join("")}</td><td><input type="checkbox" data-sp="${i}" ${s.pilihan ? "checked" : ""} title="Subjek pilihan (tidak semua murid ambil)"></td><td><button class="btn sm danger" data-sx="${i}">Padam</button></td></tr>`).join("")}
     </tbody></table></div><div class="row"><button class="btn" id="sbAdd">Tambah subjek</button><button class="btn pri" id="sbSave">Simpan subjek</button></div></div>
-  <div class="grid2">
+  <div class="grid2" data-st="gred">
     <div class="panel stack"><h3>Skala gred</h3>
       <div class="tw"><table class="t"><thead><tr><th>Gred</th><th>Markah minimum</th><th class="l">Taksiran</th><th>Lulus</th></tr></thead><tbody>
       ${skalaSorted().map((s, i) => `<tr><td>${gchip(s.g)}</td><td><input class="inp num" data-gm="${s.g}" value="${s.min}" style="width:70px"></td><td class="l"><input class="inp" data-gl="${s.g}" value="${esc(s.label)}" style="width:250px"></td><td><input type="checkbox" data-gp="${s.g}" ${s.lulus ? "checked" : ""}></td></tr>`).join("")}
@@ -1505,10 +1630,20 @@ VIEWS.tetapan = el => {
     <div class="panel stack"><h3>Bank ulasan guru kelas</h3><p class="muted small" style="margin:0">Satu ulasan setiap baris, dari prestasi terbaik ke terendah (butang Auto memilih ikut GP).</p>
       <textarea class="inp" id="ulT" rows="9">${esc(c.ulasan.join("\n"))}</textarea><button class="btn pri" id="ulSave" style="justify-self:start">Simpan ulasan</button></div>
   </div>
-  ${S.mode === "firebase" ? `<div class="panel stack" id="staffP"><h3>Pengguna (guru &amp; pentadbir)</h3><div id="staffL" class="muted">Memuatkan…</div>
-    <div class="row" style="align-items:end"><label class="f">Nama<input class="inp" id="stN"></label><label class="f">Emel<input class="inp" id="stE" type="email"></label><label class="f">Kata laluan sementara<input class="inp" id="stP" value="${genPin().toLowerCase()}2026"></label><label class="f">Peranan<select class="inp" id="stR"><option value="guru">Guru</option><option value="admin">Pentadbir</option></select></label><button class="btn pri" id="stAdd">Daftar</button></div>
-    <details><summary class="small">Daftar ramai sekali gus (tampal dari Excel)</summary><p class="small muted">Satu baris setiap guru: <code>NAMA, emel</code>. Kata laluan sementara yang sama digunakan untuk semua; guru boleh tukar melalui "Lupa kata laluan".</p><textarea class="inp" id="stBulk" rows="5" style="width:100%"></textarea><div class="row" style="margin-top:6px"><button class="btn" id="stBulkGo">Daftar semua</button></div></details></div>` : ""}
-  <div class="panel stack"><h3>Pangkalan data</h3>
+  <div class="panel stack" id="staffP" data-st="pengguna"><h3>Pengguna (guru &amp; pentadbir)</h3>
+    ${S.mode === "local" ? `<div class="banner">Mod demo: senarai ini disimpan dalam pelayar ini sahaja dan akaun log masuk belum dicipta. Selepas Firebase disambungkan, setiap guru yang didaftarkan di sini boleh log masuk dengan emel DELIMa dan kata laluan sementara.</div>` : ""}
+    <div class="stform">
+      <label class="f">Nama guru<input class="inp" id="stN" placeholder="cth: SITI AMINAH BINTI ALI" style="text-transform:uppercase"></label>
+      <label class="f">Emel DELIMa<input class="inp" id="stE" type="email" placeholder="nama@moe-dl.edu.my"></label>
+      ${S.mode === "firebase" ? `<label class="f">Kata laluan (pilihan)<input class="inp" id="stP" placeholder="Kosongkan jika guna Google"></label>` : ""}
+      <label class="f">Peranan<select class="inp" id="stR"><option value="guru">Guru</option><option value="admin">Pentadbir</option></select></label>
+      <label class="f">Guru kelas bagi<select class="inp" id="stK"><option value="">— Bukan guru kelas —</option>${c.kelas.slice().sort((a, b) => a.darjah - b.darjah || a.nama.localeCompare(b.nama)).map(k => `<option value="${k.id}">${esc(k.nama)}${k.guruEmel ? " (ada: " + esc(k.guru || k.guruEmel) + ")" : ""}</option>`).join("")}</select></label>
+      <button class="btn pri" id="stAdd">Daftar guru</button>
+    </div>
+    <details><summary class="small">Daftar ramai sekali gus (tampal dari Excel)</summary><p class="small muted">Satu baris setiap guru: <code>NAMA, emel, KELAS</code>. Lajur KELAS pilihan (cth. <code>6 ACHIEVER</code>) untuk guru kelas. Guru log masuk dengan butang Google (DELIMa); kata laluan tidak diperlukan.</p><textarea class="inp" id="stBulk" rows="5" style="width:100%" placeholder="SITI AMINAH BINTI ALI, siti.aminah@moe-dl.edu.my, 6 ACHIEVER&#10;LEE MEI LING, mei.ling@moe-dl.edu.my"></textarea><div class="row" style="margin-top:6px"><button class="btn" id="stBulkGo">Daftar semua</button></div></details>
+    <div id="staffL" class="muted">Memuatkan…</div>
+  </div>
+  <div class="panel stack" data-st="data"><h3>Pangkalan data</h3>
     <p style="margin:0">Mod semasa: <b>${S.mode === "firebase" ? "Firebase (" + esc(S.fb.cfg.projectId) + ")" : "Demo (data dalam pelayar ini sahaja)"}</b></p>
     ${S.mode === "local" ? `<p class="muted small" style="margin:0">Untuk kegunaan sebenar, tampal <b>firebaseConfig</b> daripada Firebase Console → Project settings → Your apps → Web app. Untuk penghosan kekal, letakkan config yang sama dalam pemalar <code>FIREBASE_CONFIG</code> di bahagian atas fail HTML supaya ibu bapa terus tersambung.</p>
       <textarea class="inp" id="fbT" rows="6" placeholder='{ "apiKey": "...", "authDomain": "...", "projectId": "...", "appId": "..." }'></textarea>
@@ -1516,6 +1651,11 @@ VIEWS.tetapan = el => {
       `<div class="row"><button class="btn" id="fbOff">Putuskan config yang disimpan dalam pelayar</button></div>`}
     <details><summary class="small">Peraturan keselamatan Firestore (salin ke Firebase Console → Firestore → Rules)</summary><pre class="code">${esc(RULES)}</pre></details>
   </div>`;
+  /* tabs */
+  const showSt = t => { S.sel.setTab = t; $$("[data-st]", el).forEach(x => x.hidden = x.dataset.st !== t); $$("#setTabs button").forEach(b => { b.classList.toggle("on", b.dataset.t === t); b.setAttribute("aria-selected", b.dataset.t === t); }); };
+  $$("#setTabs button").forEach(b => b.onclick = () => showSt(b.dataset.t));
+  showSt(S.sel.setTab);
+  S.sel.gsAdmin = S.sel.gsAdmin || {}; gsEditor($("#gsBox"), c.kelas, S.sel.gsAdmin);
   /* ujian */
   $$("#nU button").forEach(b => b.onclick = async () => {
     const n = +b.dataset.n; if (n === c.ujian.length) return;
@@ -1544,13 +1684,28 @@ VIEWS.tetapan = el => {
     await S.db.set("tahun", y, nc); S.meta.tahunList.push(y); S.meta.tahunAktif = y; await saveMeta(); await loadYear(y); toast("Tahun " + y + " dimulakan."); render();
   };
   /* kelas */
-  const readKelas = () => c.kelas.forEach((k, i) => { k.nama = $(`[data-kn="${i}"]`).value.trim().toUpperCase(); k.darjah = +$(`[data-kd="${i}"]`).value; k.guru = $(`[data-kg="${i}"]`).value.trim().toUpperCase(); });
+  const readKelas = () => c.kelas.forEach((k, i) => { k.nama = $(`[data-kn="${i}"]`).value.trim().toUpperCase(); k.darjah = +$(`[data-kd="${i}"]`).value; k.guru = $(`[data-kg="${i}"]`).value.trim().toUpperCase(); k.guruEmel = $(`[data-ke="${i}"]`).value.trim().toLowerCase(); });
   $("#kAdd").onclick = () => { readKelas(); c.kelas.push({ id: "k" + uid(), nama: "KELAS BAHARU", darjah: 1, guru: "" }); render(); };
-  $("#kSave").onclick = async () => { readKelas(); await saveCfg(); toast("Kelas disimpan."); render(); };
+  $("#kSave").onclick = async () => { readKelas(); await saveCfg(); for (const k of c.kelas) await saveGS(k.id); toast("Kelas disimpan. Guru kelas boleh menetapkan guru subjek melalui menu Kelas Saya."); render(); };
   $("#kImp").onclick = () => importDialog();
   $$("[data-kx]").forEach(b => b.onclick = async () => { const k = c.kelas[+b.dataset.kx]; if (muridOf(k.id).length && !(await ask(`Kelas <b>${esc(k.nama)}</b> ada ${muridOf(k.id).length} murid. Padam kelas dan semua murid serta markahnya?`, "Padam"))) return; readKelas(); c.kelas.splice(+b.dataset.kx, 1); delete S.murid[k.id]; await S.db.del("murid", `${S.tahun}_${k.id}`).catch(() => { }); for (const u of c.ujian) { delete S.markah[mkKey(u.id, k.id)]; await S.db.del("markah", `${S.tahun}_${mkKey(u.id, k.id)}`).catch(() => { }); } await saveCfg(); render(); });
   /* subjek */
   const readSubj = () => c.subjek.forEach((s, i) => { s.kod = $(`[data-sk="${i}"]`).value.trim().toUpperCase(); s.nama = $(`[data-sn="${i}"]`).value.trim().toUpperCase(); s.darjah = $$(`[data-sd="${i}"]`).filter(x => x.checked).map(x => +x.value); s.pilihan = $(`[data-sp="${i}"]`).checked; });
+  /* ranking subjects */
+  const rkSync = () => ALL.forEach(d => { const sd = subjOf(d).map(s => s.kod), ex = rankKecuali(d);
+    $$(`[data-rk^="${d}|"]`).forEach(i => i.checked = !ex.includes(i.dataset.rk.split("|")[1]));
+    const n = $(`[data-rkn="${d}"]`); if (n) n.textContent = `${sd.filter(x => !ex.includes(x)).length}/${sd.length}`; });
+  $$("[data-rk]").forEach(i => i.onchange = async () => {
+    const [d, kod] = i.dataset.rk.split("|"); const on = i.checked;
+    const ds = $("#rkSemua").checked ? ALL.filter(x => subjOf(x).some(s => s.kod === kod)) : [+d];
+    const next = structuredClone(c.rankKecuali || {});
+    for (const x of ds) { const ex = new Set(next[x] || []); on ? ex.delete(kod) : ex.add(kod); next[x] = [...ex]; }
+    const kosong = ds.find(x => !subjOf(x).some(s => !next[x].includes(s.kod)));
+    if (kosong) { i.checked = !on; return toast(`Sekurang-kurangnya satu subjek mesti dikira untuk kedudukan Tahun ${kosong}.`); }
+    c.rankKecuali = next; rkSync(); await saveCfg();
+    toast(`${kod} ${on ? "dikira" : "tidak dikira"} untuk kedudukan ${ds.length > 1 ? "semua darjah" : "Tahun " + d}.`);
+  });
+  $$("[data-rall]").forEach(b => b.onclick = async () => { const d = +b.dataset.rall; c.rankKecuali = { ...(c.rankKecuali || {}), [d]: [] }; rkSync(); await saveCfg(); toast(`Semua subjek dikira untuk kedudukan Tahun ${d}.`); });
   $("#sbAdd").onclick = () => { readSubj(); c.subjek.push({ kod: "BARU", nama: "SUBJEK BAHARU", darjah: [...ALL] }); render(); };
   $("#sbSave").onclick = async () => { readSubj(); const k = c.subjek.map(s => s.kod); if (new Set(k).size !== k.length) return toast("Kod subjek mesti unik."); await saveCfg(); toast("Subjek disimpan."); render(); };
   $$("[data-sx]").forEach(b => b.onclick = async () => { const s = c.subjek[+b.dataset.sx]; if (!(await ask(`Padam subjek <b>${esc(s.nama)}</b>? Markah sedia ada tidak dipadam tetapi tidak lagi dipaparkan.`, "Padam"))) return; readSubj(); c.subjek.splice(+b.dataset.sx, 1); await saveCfg(); render(); });
@@ -1566,24 +1721,59 @@ VIEWS.tetapan = el => {
   });
   $("#fbOff") && ($("#fbOff").onclick = () => { LS.del("emarkah-fbconfig"); toast("Config dibuang. Memuatkan semula…"); setTimeout(() => location.reload(), 700); });
   $("#dReset") && ($("#dReset").onclick = async () => { if (!(await ask("Padam semua data dalam pelayar ini dan muat semula data contoh?", "Set semula"))) return; LS.keys().filter(k => k && k.startsWith("emarkah:")).forEach(k => LS.del(k)); await seedDemo(); S.meta = await S.db.get("app", "meta"); await loadYear(S.meta.tahunAktif); render(); });
-  if (S.mode === "firebase") loadStaff();
+  loadStaff();
 };
 async function loadStaff() {
-  const box = $("#staffL"); if (!box) return;
+  const box = $("#staffL"); if (!box) return; const c = S.cfg;
+  const kelasGuru = em => c.kelas.filter(k => (k.guruEmel || "").toLowerCase() === em).map(k => k.nama);
   try {
-    const list = await S.db.list("staff");
-    box.innerHTML = list.length ? `<div class="tw"><table class="t"><thead><tr><th class="l">Nama</th><th class="l">Emel</th><th>Peranan</th><th></th></tr></thead><tbody>${list.map(s => `<tr><td class="l">${esc(s.data.nama)}</td><td class="l">${esc(s.id)}</td><td>${s.data.peranan === "admin" ? "Pentadbir" : "Guru"}</td><td>${s.id !== S.user.emel ? `<button class="btn sm danger" data-sdel="${esc(s.id)}">Buang akses</button>` : ""}</td></tr>`).join("")}</tbody></table></div>` : "Belum ada pengguna berdaftar.";
-    $$("[data-sdel]").forEach(b => b.onclick = async () => { if (!(await ask(`Buang akses ${esc(b.dataset.sdel)}?`, "Buang"))) return; await S.db.del("staff", b.dataset.sdel); loadStaff(); });
+    const list = (await S.db.list("staff")).sort((a, b) => (a.data.nama || "").localeCompare(b.data.nama || ""));
+    box.classList.remove("muted");
+    box.innerHTML = list.length ? `<div class="eyebrow" style="margin-bottom:6px">${list.length} pengguna berdaftar</div><div class="tw"><table class="t"><thead><tr><th>No</th><th class="l">Nama</th><th class="l">Emel DELIMa</th><th>Peranan</th><th class="l">Guru kelas</th><th></th></tr></thead><tbody>${list.map((s, i) => `<tr><td>${i + 1}</td><td class="l">${esc(s.data.nama)}</td><td class="l">${esc(s.id)}</td><td>${s.id === S.user.emel ? `<span class="pill mid">Pentadbir</span>` : `<select class="inp" data-srole="${esc(s.id)}" aria-label="Peranan ${esc(s.data.nama)}" style="padding:4px 8px"><option value="guru" ${s.data.peranan !== "admin" ? "selected" : ""}>Guru</option><option value="admin" ${s.data.peranan === "admin" ? "selected" : ""}>Pentadbir</option></select>`}</td><td class="l">${esc(kelasGuru(s.id).join(", ")) || `<span class="muted">–</span>`}</td><td>${s.id !== S.user.emel ? `<button class="btn sm danger" data-sdel="${esc(s.id)}">Buang akses</button>` : `<span class="muted small">anda</span>`}</td></tr>`).join("")}</tbody></table></div>` : `<p class="muted" style="margin:0">Belum ada guru berdaftar. Isi borang di atas atau tampal senarai dari Excel.</p>`;
+    $$("[data-srole]").forEach(sel => sel.onchange = async () => {
+      const id = sel.dataset.srole, rec = list.find(x => x.id === id).data, to = sel.value;
+      const ok = await ask(to === "admin" ? `Lantik <b>${esc(rec.nama)}</b> sebagai <b>pentadbir</b>? Pentadbir boleh mengubah semua tetapan, murid, PIN dan pengguna.` : `Tukar <b>${esc(rec.nama)}</b> kepada <b>guru</b>? Akses pentadbir akan dibuang.`, to === "admin" ? "Lantik pentadbir" : "Tukar kepada guru");
+      if (!ok) { sel.value = rec.peranan === "admin" ? "admin" : "guru"; return; }
+      try { await S.db.set("staff", id, { ...rec, peranan: to }); toast(to === "admin" ? `${rec.nama} kini pentadbir.` : `${rec.nama} kini guru.`); loadStaff(); }
+      catch (e) { toast("Gagal: " + e.message); sel.value = rec.peranan; }
+    });
+    $$("[data-sdel]").forEach(b => b.onclick = async () => { if (!(await ask(`Buang akses <b>${esc(b.dataset.sdel)}</b>? Guru ini tidak lagi boleh log masuk ke myMarkah.`, "Buang"))) return; await S.db.del("staff", b.dataset.sdel); toast("Akses dibuang."); loadStaff(); });
   } catch (e) { box.textContent = "Gagal memuatkan: " + e.message; }
-  const add = async (nama, email, pw, role) => {
-    email = email.trim().toLowerCase();
-    const sec = S.fb.initializeApp(S.fb.cfg, "sec" + Date.now()); const sa = S.fb.getAuth(sec);
-    try { await S.fb.createUserWithEmailAndPassword(sa, email, pw); } catch (e) { if (e.code !== "auth/email-already-in-use") throw e; }
-    finally { try { await S.fb.signOut(sa); await S.fb.deleteApp(sec); } catch (e) { } }
-    await S.db.set("staff", email, { nama: nama.trim().toUpperCase(), peranan: role, emel: email });
+  const pw = () => $("#stP") ? $("#stP").value : "";
+  const add = async (nama, email, role, kelasId) => {
+    email = email.trim().toLowerCase(); nama = nama.trim().toUpperCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new Error("Emel tidak sah: " + email);
+    if (S.mode === "firebase" && pw()) { /* optional password account; Google sign-in needs no account creation */
+      const sec = S.fb.initializeApp(S.fb.cfg, "sec" + Date.now()); const sa = S.fb.getAuth(sec);
+      try { await S.fb.createUserWithEmailAndPassword(sa, email, pw()); } catch (e) { if (e.code !== "auth/email-already-in-use") throw e; }
+      finally { try { await S.fb.signOut(sa); await S.fb.deleteApp(sec); } catch (e) { } }
+    }
+    await S.db.set("staff", email, { nama, peranan: role, emel: email });
+    if (kelasId) { const k = kelasById(kelasId); if (k) { k.guruEmel = email; k.guru = nama; return k.id; } }
+    return null;
   };
-  $("#stAdd").onclick = async () => { const n = $("#stN").value, e = $("#stE").value, p = $("#stP").value, r = $("#stR").value; if (!n || !e || p.length < 6) return toast("Isi nama, emel dan kata laluan (min 6 aksara)."); try { await add(n, e, p, r); toast("Didaftarkan. Kata laluan sementara: " + p); loadStaff(); } catch (er) { toast("Gagal: " + er.message); } };
-  $("#stBulkGo").onclick = async () => { const p = $("#stP").value; const lines = $("#stBulk").value.split("\n").map(l => l.split(/[,\t]/).map(x => x.trim())).filter(x => x[0] && x[1]); let ok = 0; for (const [n, e] of lines) { try { await add(n, e, p, "guru"); ok++; } catch (er) { console.warn(e, er); } } toast(`${ok}/${lines.length} guru didaftarkan. Kata laluan sementara: ${p}`); loadStaff(); };
+  const after = async touched => { if (touched.length) { await saveCfg(); for (const kid of touched) await saveGS(kid); } };
+  $("#stAdd").onclick = async () => {
+    const n = $("#stN").value, e = $("#stE").value, r = $("#stR").value, k = $("#stK").value;
+    if (!n.trim() || !e.trim()) return toast("Isi nama dan emel DELIMa guru.");
+    if (pw() && pw().length < 6) return toast("Kata laluan mesti sekurang-kurangnya 6 aksara, atau kosongkan untuk guna Google sahaja.");
+    try { const kid = await add(n, e, r, k); await after(kid ? [kid] : []); toast(`${n.toUpperCase()} didaftarkan${kid ? " sebagai guru kelas " + kelasById(kid).nama : ""}.${pw() ? " Kata laluan: " + pw() : " Guru boleh log masuk dengan butang Google."}`); render(); }
+    catch (er) { toast("Gagal: " + er.message); }
+  };
+  $("#stBulkGo").onclick = async () => {
+    if (pw() && pw().length < 6) return toast("Kata laluan mesti sekurang-kurangnya 6 aksara, atau kosongkan untuk guna Google sahaja.");
+    const lines = $("#stBulk").value.split("\n").map(l => l.split(/[,\t;]/).map(x => x.trim())).filter(x => x[0] && x[1]);
+    let ok = 0; const gagal = [], touched = [];
+    for (const [n, e, kn] of lines) {
+      const k = kn ? c.kelas.find(x => x.nama.toUpperCase().replace(/\s+/g, " ") === kn.toUpperCase().replace(/\s+/g, " ")) : null;
+      if (kn && !k) { gagal.push(`${n} (kelas "${kn}" tiada)`); continue; }
+      try { const kid = await add(n, e, "guru", k?.id); if (kid) touched.push(kid); ok++; } catch (er) { gagal.push(`${n} (${er.message})`); }
+    }
+    await after(touched);
+    S.sel.setTab = "pengguna"; render();
+    if (gagal.length) modal(`<h3>${ok}/${lines.length} guru didaftarkan</h3><p class="small" style="margin:0">Tidak berjaya:</p><ul class="small">${gagal.map(x => `<li>${esc(x)}</li>`).join("")}</ul><div class="row" style="justify-content:flex-end"><button class="btn pri" data-close>Tutup</button></div>`);
+    else toast(`${ok} guru didaftarkan${touched.length ? `, ${touched.length} sebagai guru kelas` : ""}.${pw() ? " Kata laluan: " + pw() : ""}`);
+  };
 }
 const RULES = `rules_version = '2';
 service cloud.firestore {
@@ -1600,6 +1790,9 @@ service cloud.firestore {
     match /tahun/{y}      { allow read: if isStaff(); allow write: if isAdmin(); }
     match /murid/{id}     { allow read: if isStaff(); allow write: if isAdmin(); }
     match /markah/{id}    { allow read, write: if isStaff(); }
+    match /guruSubjek/{id} { allow read: if isStaff(); allow create, delete: if isAdmin();
+                            allow update: if isAdmin() || (isStaff() && resource.data.guruKelasEmel == email()
+                                          && request.resource.data.guruKelasEmel == resource.data.guruKelasEmel); }
     match /portal/{id}    { allow get: if true; allow list: if false; allow write: if isAdmin(); }
     match /staff/{em}     { allow get: if request.auth != null && (email() == em || isAdmin());
                             allow list, write: if isAdmin(); }
