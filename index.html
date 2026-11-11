@@ -306,6 +306,13 @@ const fmt = (n, d = 2) => (n == null || isNaN(n)) ? "–" : Number(n).toFixed(d)
 const pc = (a, b) => b ? (a / b * 100) : 0;
 const topLevel = (() => { try { return window.self === window.top; } catch (e) { return false; } })();
 const normIC = s => String(s ?? "").replace(/[^0-9A-Za-z]/g, "").toUpperCase();
+const icPad = v => { let t = normIC(v); if (/^\d{11}$/.test(t)) t = "0" + t; return t; }; /* CSV/Excel drops a leading zero */
+const pinMode = () => S.cfg?.pinMode || "ic4";
+/* default parent PIN = last 4 digits of the pupil's IC (admin can switch to random 6-character PINs) */
+const pinBaru = ic => { const d = normIC(ic).replace(/\D/g, ""); return pinMode() === "ic4" && d.length >= 4 ? d.slice(-4) : genPin(); };
+function dlFile(name, text) { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["﻿" + text], { type: "text/csv;charset=utf-8" })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
+const CSV_MURID = "NO IC,NAMA,KELAS\n150312130123,AHMAD DANIAL BIN RAZAK,1 ACHIEVER\n150620131457,NUR AISYAH BINTI KAMAL,1 ACHIEVER\n150911130982,JOHAN ANAK MERING,1 BRILLIANT\n150205131344,TAN XIN YI,1 CHAMPION\n140718130561,MUHAMMAD HARIS BIN ZULKIFLI,2 DYNAMIC\n130430131208,CHRISTINA ANAK JABU,3 ENERGETIC\n";
+const CSV_GURU = "NAMA,EMEL,PERANAN,KELAS\nSITI AMINAH BINTI ALI,siti.aminah@moe-dl.edu.my,GURU,1 ACHIEVER\nLEE MEI LING,lee.meiling@moe-dl.edu.my,GURU,1 BRILLIANT\nJOHNNY ANAK NGAU,johnny.ngau@moe-dl.edu.my,GURU,\nAHMAD FAIZAL BIN OMAR,ahmad.faizal@moe-dl.edu.my,PENTADBIR,\n";
 async function sha256(t) {
   const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t));
   return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, "0")).join("");
@@ -621,7 +628,7 @@ async function seedDemo() {
       const nama = l[0] ? `${f} ${l[0]} ${l[1]}` : `${l[1].split(" ")[0]} ${f} ${l[1].split(" ").slice(1).join(" ")}`.trim();
       const islam = l[0] === "BIN" || l[0] === "BINTI";
       const ic = String(20 - k.darjah).padStart(2, "0") + "05" + String(10 + (n % 18)).padStart(2, "0") + "13" + String(9000 + n).padStart(4, "0");
-      const m = { id: "m" + n, ic, nama, pin: k.id === "k6a" && i === 0 ? "DEMO26" : genPin(), agama: islam }; murid[k.id].push(m); n++;
+      const m = { id: "m" + n, ic, nama, pin: ic.slice(-4), agama: islam }; murid[k.id].push(m); n++;
       const ab = lvl[k.id] + (rnd() - .5) * 30;
       for (const u of ["U1", "U2"]) {
         mk[u][k.id] = mk[u][k.id] || {};
@@ -649,7 +656,7 @@ async function seedDemo() {
   const au = {}; for (const u in mk) for (const k of cfg.kelas) { const a = au[u + "_" + k.id] = {}; const t = new Date(Date.now() - (u === "U1" ? 60 : 3) * 864e5 - Math.floor(rnd() * 864e5)).toISOString();
     for (const s of cfg.subjek.filter(s => s.darjah.includes(k.darjah))) if (Object.values(mk[u][k.id]).some(r => r.m[s.kod] != null)) a[s.kod] = { nama: GS[s.kod] || k.guru, emel: "demo", masa: t };
     a._ulasan = { nama: k.guru, emel: "demo", masa: t }; }
-  await db.set("app", "meta", { tahunAktif: y, tahunList: [y], demo: true, seedVer: 5 });
+  await db.set("app", "meta", { tahunAktif: y, tahunList: [y], demo: true, seedVer: 6 });
   await db.set("tahun", y, cfg);
   for (const k in murid) await db.set("murid", `${y}_${k}`, { senarai: murid[k] });
   for (const u in mk) for (const k in mk[u]) await db.set("markah", `${y}_${u}_${k}`, { data: mk[u][k], audit: au[u + "_" + k] || {} });
@@ -663,7 +670,7 @@ async function boot() {
     try { S.fb = await loadFirebase(cfg); S.db = new FireDB(S.fb); S.mode = "firebase"; }
     catch (e) { console.error(e); S.mode = "local"; S.db = new LocalDB(); S.fbErr = e.message; }
   } else { S.mode = "local"; S.db = new LocalDB(); }
-  if (S.mode === "local") { const mt = await S.db.get("app", "meta"); if (!mt || (mt.demo && mt.seedVer !== 5)) { LS.keys().filter(k => k && k.startsWith("emarkah:")).forEach(k => LS.del(k)); await seedDemo(); } }
+  if (S.mode === "local") { const mt = await S.db.get("app", "meta"); if (!mt || (mt.demo && mt.seedVer !== 6)) { LS.keys().filter(k => k && k.startsWith("emarkah:")).forEach(k => LS.del(k)); await seedDemo(); } }
   if (S.mode === "firebase") {
     S.fb.onAuthStateChanged(S.fb.auth, async u => {
       if (u && !S.user && u.email) { try { await staffAfterAuth(u.email); } catch (e) { renderLogin(e.message); } }
@@ -728,11 +735,11 @@ function renderLogin(err) {
           </form></details>
         </div>`) : `
         <form id="fParent" class="stack" style="gap:12px">
-          <p class="muted small" style="margin:0">Masukkan No. MyKid / Kad Pengenalan anak dan PIN semakan yang diberi oleh sekolah.</p>
+          <p class="muted small" style="margin:0">Masukkan No. MyKid / Kad Pengenalan anak dan PIN semakan. PIN ialah <b>4 digit akhir No. MyKid</b> anak, melainkan sekolah memberi PIN lain.</p>
           <label class="f">No. MyKid / KP murid<input class="inp" id="pIc" inputmode="numeric" placeholder="cth: 140510139001" required></label>
-          <label class="f">PIN semakan (6 aksara)<input class="inp" id="pPin" maxlength="6" style="text-transform:uppercase;letter-spacing:.2em" required></label>
+           <label class="f">PIN semakan<input class="inp" id="pPin" maxlength="6" placeholder="cth: 4 digit akhir No. MyKid" style="text-transform:uppercase;letter-spacing:.2em" required></label>
           <button class="btn pri" type="submit">Semak keputusan</button>
-          ${demo ? `<div class="demo-note">Cuba data contoh: No. KP <code id="demoIc">…</code> dan PIN <code>DEMO26</code></div>` : ""}
+          ${demo ? `<div class="demo-note">Cuba data contoh: No. KP <code id="demoIc">…</code> dan PIN <code id="demoPin">…</code></div>` : ""}
         </form>`}
     </div>
   </div></div>`;
@@ -764,7 +771,7 @@ function renderLogin(err) {
     };
   }
   if ($("#fParent")) {
-    if ($("#demoIc")) S.db.get("murid", `${String(new Date().getFullYear())}_k6a`).then(d => { const m = d?.senarai?.[0]; if (m) $("#demoIc").textContent = m.ic; });
+    if ($("#demoIc")) S.db.get("murid", `${String(new Date().getFullYear())}_k6a`).then(d => { const m = d?.senarai?.[0]; if (m) { $("#demoIc").textContent = m.ic; $("#demoPin").textContent = m.pin; } });
     $("#fParent").onsubmit = async e => { e.preventDefault(); await parentLogin($("#pIc").value, $("#pPin").value); };
   }
 }
@@ -1375,7 +1382,7 @@ VIEWS.murid = el => {
   $("#mPin") && ($("#mPin").onclick = () => pinSheet(k));
   $("#mAdd") && ($("#mAdd").onclick = () => muridForm(k.id));
   $$("[data-ed]").forEach(b => b.onclick = () => muridForm(k.id, b.dataset.ed));
-  $$("[data-pin]").forEach(b => b.onclick = async () => { const m = ms.find(x => x.id === b.dataset.pin); if (!(await ask(`Jana PIN baharu untuk <b>${esc(m.nama)}</b>? PIN lama tidak lagi berfungsi selepas portal dikemas kini.`))) return; m.pin = genPin(); await saveMurid(k.id); toast("PIN baharu: " + m.pin); render(); });
+  $$("[data-pin]").forEach(b => b.onclick = async () => { const m = ms.find(x => x.id === b.dataset.pin); if (!(await ask(`Jana PIN rawak baharu (6 aksara) untuk <b>${esc(m.nama)}</b>? Gunakan jika PIN lama telah diketahui orang lain. PIN lama tidak lagi berfungsi selepas portal dikemas kini.`))) return; m.pin = genPin(); await saveMurid(k.id); toast("PIN baharu: " + m.pin); render(); });
   $$("[data-del]").forEach(b => b.onclick = async () => { const m = ms.find(x => x.id === b.dataset.del); if (!(await ask(`Padam <b>${esc(m.nama)}</b> daripada ${esc(k.nama)}? Markah murid ini juga akan hilang.`, "Padam"))) return; S.murid[k.id] = ms.filter(x => x.id !== m.id); await saveMurid(k.id); toast("Murid dipadam."); render(); });
 };
 function muridForm(kid, mid) {
@@ -1395,7 +1402,7 @@ function muridForm(kid, mid) {
         if (nk !== kid) { S.murid[kid] = muridOf(kid).filter(x => x.id !== mid); (S.murid[nk] = muridOf(nk)).push(m);
           for (const u of S.cfg.ujian) { const a = S.markah[mkKey(u.id, kid)]; if (a && a[mid]) { (S.markah[mkKey(u.id, nk)] = S.markah[mkKey(u.id, nk)] || {})[mid] = a[mid]; delete a[mid]; await saveMarkahNow(mkKey(u.id, kid)); await saveMarkahNow(mkKey(u.id, nk)); } }
           await saveMurid(nk); }
-      } else (S.murid[nk] = muridOf(nk)).push({ id: uid(), ic, nama, pin: genPin() });
+      } else (S.murid[nk] = muridOf(nk)).push({ id: uid(), ic, nama, pin: pinBaru(ic) });
       await saveMurid(kid); close(); toast("Disimpan."); render();
     };
   });
@@ -1414,18 +1421,21 @@ function pinSheet(k) {
 function importDialog() {
   if (typeof XLSX === "undefined") return toast("Pustaka Excel gagal dimuatkan.");
   modal(`<h3>Import daripada Excel</h3>
-    <p class="small muted" style="margin:0">Dua format diterima: (1) fail markah seperti <b>TAHUN 6.xlsx</b> (helaian kelas dengan baris "KELAS", "NO IC", "NAMA PELAJAR" dan kod subjek), atau (2) senarai ringkas dengan lajur <b>NO IC</b>, <b>NAMA</b>, <b>KELAS</b>.</p>
+    <p class="small muted" style="margin:0">Dua format diterima: (1) fail markah seperti <b>TAHUN 6.xlsx</b> (helaian kelas dengan baris "KELAS", "NO IC", "NAMA PELAJAR" dan kod subjek), atau (2) fail <b>CSV / Excel</b> dengan lajur <b>NO IC</b>, <b>NAMA</b>, <b>KELAS</b>. Nama kelas mesti sama seperti dalam myMarkah (cth. <code>1 ACHIEVER</code>). Lajur kod subjek (BM, BI, MT…) boleh ditambah untuk markah.</p>
+    <div class="banner small">Jika menyunting dalam Excel, tetapkan lajur NO IC sebagai <b>Text</b> supaya nombor tidak bertukar (cth. 1.5E+11). PIN ibu bapa murid baharu: <b>${pinMode() === "ic4" ? "4 digit akhir No. KP" : "PIN rawak 6 aksara"}</b>.</div>
+    ${topLevel ? `<button class="btn sm" id="xTpl" style="justify-self:start">Muat turun contoh CSV murid</button>` : `<details><summary class="small">Contoh CSV murid</summary><pre class="code">${esc(CSV_MURID)}</pre></details>`}
     <input type="file" id="xF" accept=".xlsx,.xls,.csv" class="inp">
     <label class="f">Masukkan markah ke ujian<select class="inp" id="xU"><option value="">Jangan import markah (murid sahaja)</option>${opt(S.cfg.ujian, S.cfg.ujian[0]?.id)}</select></label>
     <div id="xPrev" class="small"></div>
     <div class="row" style="justify-content:flex-end"><button class="btn" data-close>Batal</button><button class="btn pri" id="xGo" disabled>Import</button></div>`, (box, close) => {
     let parsed = null;
+    $("#xTpl", box) && ($("#xTpl", box).onclick = () => dlFile("contoh_murid_mymarkah.csv", CSV_MURID));
     $("#xF", box).onchange = async e => {
       const f = e.target.files[0]; if (!f) return; $("#xPrev", box).textContent = "Membaca fail…";
       try { const wb = XLSX.read(await f.arrayBuffer(), { type: "array" }); parsed = parseWorkbook(wb); }
       catch (er) { $("#xPrev", box).textContent = "Gagal membaca: " + er.message; return; }
       if (!parsed.kelas.length) { $("#xPrev", box).innerHTML = `<span style="color:var(--danger)">Tiada helaian kelas atau senarai murid dikenal pasti.</span>`; return; }
-      $("#xPrev", box).innerHTML = `<div class="tw"><table class="t"><thead><tr><th class="l">Kelas</th><th>Darjah</th><th>Murid</th><th>Ada markah</th></tr></thead><tbody>${parsed.kelas.map(k => `<tr><td class="l">${esc(k.nama)}</td><td>${k.darjah}</td><td>${k.murid.length}</td><td>${k.murid.filter(m => Object.keys(m.m).length).length}</td></tr>`).join("")}</tbody></table></div>${parsed.subjBaru.length ? `<p class="muted">Subjek baharu akan ditambah: ${parsed.subjBaru.map(esc).join(", ")}</p>` : ""}<p class="muted">Murid sedia ada (No. KP sama) akan dikemas kini, bukan digandakan.</p>`;
+      $("#xPrev", box).innerHTML = `<div class="tw"><table class="t"><thead><tr><th class="l">Kelas</th><th>Status</th><th>Darjah</th><th>Murid</th><th>Ada markah</th></tr></thead><tbody>${parsed.kelas.map(k => `<tr><td class="l">${esc(k.nama)}</td><td>${S.cfg.kelas.some(x => x.nama.toUpperCase() === k.nama.toUpperCase()) ? `<span class="pill ok">sedia ada</span>` : `<span class="pill mid">kelas baharu</span>`}</td><td>${k.darjah}</td><td>${k.murid.length}</td><td>${k.murid.filter(m => Object.keys(m.m).length).length}</td></tr>`).join("")}</tbody></table></div>${parsed.subjBaru.length ? `<p class="muted">Subjek baharu akan ditambah: ${parsed.subjBaru.map(esc).join(", ")}</p>` : ""}<p class="muted">Murid sedia ada (No. KP sama) akan dikemas kini, bukan digandakan.</p>`;
       $("#xGo", box).disabled = false;
     };
     $("#xGo", box).onclick = async () => { $("#xGo", box).disabled = true; $("#xGo", box).textContent = "Mengimport…"; const r = await applyImport(parsed, $("#xU", box).value); close(); toast(`Import selesai: ${r.baru} murid baharu, ${r.kemas} dikemas kini.`); render(); };
@@ -1449,7 +1459,7 @@ function parseWorkbook(wb) {
       const k = { nama: kn, darjah: nameD(kn), murid: [] };
       for (let r = 2; r <= R.e.r; r++) {
         const nama = String(cellV(ws, r, 2)).trim(); if (!nama || nama === "#N/A") continue;
-        const ic = normIC(cellV(ws, r, 1)); const m = {};
+        const ic = icPad(cellV(ws, r, 1)); const m = {};
         for (const { c, kod } of cols) { const p = parseMark(cellV(ws, r, c)); if (p.ok && p.v != null) m[kod] = p.v; }
         k.murid.push({ ic, nama: nama.toUpperCase(), m, ulasan: ulCol >= 0 ? String(cellV(ws, r, ulCol)).trim() : "", hadir: hdCol >= 0 ? String(cellV(ws, r, hdCol)).trim() : "" });
       }
@@ -1469,7 +1479,7 @@ function parseWorkbook(wb) {
       const nama = String(r[ni] || "").trim(), kn = String(r[ki] || "").trim(); if (!nama || !kn) continue;
       let k = out.kelas.find(x => x.nama.toUpperCase() === kn.toUpperCase()); if (!k) out.kelas.push(k = { nama: kn.toUpperCase(), darjah: nameD(kn), murid: [] });
       const m = {}; for (const s of subjCols) { const p = parseMark(r[s.i]); if (p.ok && p.v != null) m[s.h] = p.v; }
-      k.murid.push({ ic: ci >= 0 ? normIC(r[ci]) : "", nama: nama.toUpperCase(), m, ulasan: "", hadir: "" });
+      k.murid.push({ ic: ci >= 0 ? icPad(r[ci]) : "", nama: nama.toUpperCase(), m, ulasan: "", hadir: "" });
     }
   }
   return out;
@@ -1487,7 +1497,7 @@ async function applyImport(p, ujian) {
       let found = im.ic ? allM().find(x => normIC(x.m.ic) === im.ic) : allM().find(x => x.m.nama === im.nama && x.k.id === k.id);
       let m;
       if (found) { m = found.m; m.nama = im.nama; if (found.k.id !== k.id) { S.murid[found.k.id] = muridOf(found.k.id).filter(x => x.id !== m.id); touched.add(found.k.id); S.murid[k.id].push(m); } kemas++; }
-      else { m = { id: uid(), ic: im.ic || ("TIADA-" + uid()), nama: im.nama, pin: genPin() }; S.murid[k.id].push(m); baru++; }
+      else { m = { id: uid(), ic: im.ic || ("TIADA-" + uid()), nama: im.nama, pin: pinBaru(im.ic) }; S.murid[k.id].push(m); baru++; }
       touched.add(k.id);
       if (ujian && (Object.keys(im.m).length || im.ulasan || im.hadir)) {
         const key = mkKey(ujian, k.id); S.markah[key] = S.markah[key] || {};
@@ -1533,7 +1543,7 @@ async function publishPortal() {
 
 /* ---------------- PARENT ---------------- */
 async function parentLogin(ic, pin) {
-  ic = normIC(ic); pin = String(pin).trim().toUpperCase(); if (!ic || pin.length < 6) return toast("Isi No. MyKid dan PIN 6 aksara.");
+  ic = normIC(ic); pin = String(pin).trim().toUpperCase(); if (!ic || pin.length < 4) return toast("Isi No. MyKid dan PIN (sekurang-kurangnya 4 aksara).");
   const h = await portalKey(ic, pin);
   let meta = null; try { meta = await S.db.get("app", "meta"); } catch (e) { }
   const years = (meta?.tahunList || [String(new Date().getFullYear())]).slice().sort().reverse();
@@ -1588,6 +1598,12 @@ VIEWS.tetapan = el => {
     </tbody></table></div>
     <div class="row"><button class="btn gold" id="pub">Kemas kini portal ibu bapa</button><span class="muted small">${c.portalDikemas ? "Kali terakhir: " + new Date(c.portalDikemas).toLocaleString("ms-MY") : "Belum pernah diterbitkan."} Klik selepas markah disahkan, selepas menukar status Terbit, atau selepas menukar PIN.</span></div>
   </div>
+  <div class="panel stack" data-st="ujian"><h3>PIN semakan ibu bapa</h3>
+    <p class="muted small" style="margin:0">Ibu bapa log masuk ke portal dengan No. MyKid anak dan PIN ini. Murid baharu (tambah atau import) terus menerima PIN mengikut pilihan di bawah.</p>
+    <div class="seg" id="pinMode" style="justify-self:start"><button data-p="ic4" class="${pinMode() === "ic4" ? "on" : ""}">4 digit akhir No. KP (lalai)</button><button data-p="rawak" class="${pinMode() === "rawak" ? "on" : ""}">PIN rawak 6 aksara</button></div>
+    <div class="banner small">${pinMode() === "ic4" ? "Mudah diingat oleh ibu bapa, tetapi sesiapa yang mengetahui No. MyKid murid boleh melihat keputusannya. Pilih PIN rawak jika mahu lebih selamat." : "Lebih selamat. Edarkan PIN melalui Murid &amp; PIN → Cetak senarai PIN."}</div>
+    <div class="row"><button class="btn" id="pinAll">Guna untuk semua murid sedia ada</button><span class="muted small">Selepas itu klik Kemas kini portal ibu bapa.</span></div>
+  </div>
   <div class="panel stack" data-st="slip"><h3>Paparan slip keputusan</h3>
     <p class="muted small" style="margin:0">Hidupkan atau matikan maklumat pada slip (cetakan guru dan portal ibu bapa). Disimpan serta-merta. Klik <b>Kemas kini portal ibu bapa</b> supaya ibu bapa melihat perubahan.</p>
     <div class="slipset"><div class="toggles">${SLIP_ITEMS.map(([kk, l]) => `<label><span>${l}</span><span class="sw"><input type="checkbox" data-sl="${kk}" ${slipOpt()[kk] ? "checked" : ""}><span></span></span></label>`).join("")}</div>
@@ -1640,7 +1656,9 @@ VIEWS.tetapan = el => {
       <label class="f">Guru kelas bagi<select class="inp" id="stK"><option value="">— Bukan guru kelas —</option>${c.kelas.slice().sort((a, b) => a.darjah - b.darjah || a.nama.localeCompare(b.nama)).map(k => `<option value="${k.id}">${esc(k.nama)}${k.guruEmel ? " (ada: " + esc(k.guru || k.guruEmel) + ")" : ""}</option>`).join("")}</select></label>
       <button class="btn pri" id="stAdd">Daftar guru</button>
     </div>
-    <details><summary class="small">Daftar ramai sekali gus (tampal dari Excel)</summary><p class="small muted">Satu baris setiap guru: <code>NAMA, emel, KELAS</code>. Lajur KELAS pilihan (cth. <code>6 ACHIEVER</code>) untuk guru kelas. Guru log masuk dengan butang Google (DELIMa); kata laluan tidak diperlukan.</p><textarea class="inp" id="stBulk" rows="5" style="width:100%" placeholder="SITI AMINAH BINTI ALI, siti.aminah@moe-dl.edu.my, 6 ACHIEVER&#10;LEE MEI LING, mei.ling@moe-dl.edu.my"></textarea><div class="row" style="margin-top:6px"><button class="btn" id="stBulkGo">Daftar semua</button></div></details>
+    <div class="row"><label class="btn" for="stCsv" tabindex="0">Import CSV guru</label><input type="file" id="stCsv" accept=".csv,.xlsx,.xls" hidden>${topLevel ? `<button class="btn" id="stTpl">Muat turun contoh CSV guru</button>` : ""}<span class="muted small">Lajur: <b>NAMA, EMEL, PERANAN</b> (GURU / PENTADBIR), <b>KELAS</b> (pilihan, untuk guru kelas)</span></div>
+    ${topLevel ? "" : `<details><summary class="small">Contoh CSV guru</summary><pre class="code">${esc(CSV_GURU)}</pre></details>`}
+    <details><summary class="small">Daftar ramai sekali gus (tampal dari Excel)</summary><p class="small muted">Satu baris setiap guru: <code>NAMA, emel, PERANAN, KELAS</code>. PERANAN (GURU / PENTADBIR) dan KELAS pilihan. Guru log masuk dengan butang Google (DELIMa); kata laluan tidak diperlukan.</p><textarea class="inp" id="stBulk" rows="5" style="width:100%" placeholder="SITI AMINAH BINTI ALI, siti.aminah@moe-dl.edu.my, GURU, 6 ACHIEVER&#10;AHMAD FAIZAL BIN OMAR, ahmad.faizal@moe-dl.edu.my, PENTADBIR"></textarea><div class="row" style="margin-top:6px"><button class="btn" id="stBulkGo">Daftar semua</button></div></details>
     <div id="staffL" class="muted">Memuatkan…</div>
   </div>
   <div class="panel stack" data-st="data"><h3>Pangkalan data</h3>
@@ -1656,6 +1674,13 @@ VIEWS.tetapan = el => {
   $$("#setTabs button").forEach(b => b.onclick = () => showSt(b.dataset.t));
   showSt(S.sel.setTab);
   S.sel.gsAdmin = S.sel.gsAdmin || {}; gsEditor($("#gsBox"), c.kelas, S.sel.gsAdmin);
+  $$("#pinMode button").forEach(b => b.onclick = async () => { c.pinMode = b.dataset.p; await saveCfg(); toast(b.dataset.p === "ic4" ? "PIN murid baharu: 4 digit akhir No. KP." : "PIN murid baharu: rawak 6 aksara."); render(); });
+  $("#pinAll").onclick = async () => {
+    const n = c.kelas.reduce((a, k) => a + muridOf(k.id).length, 0);
+    if (!(await ask(`Tetapkan semula PIN <b>${n}</b> murid kepada <b>${pinMode() === "ic4" ? "4 digit akhir No. KP" : "PIN rawak 6 aksara"}</b>? PIN lama tidak berfungsi lagi selepas portal dikemas kini.`, "Tetapkan semula"))) return;
+    for (const k of c.kelas) { const ms = muridOf(k.id); if (!ms.length) continue; ms.forEach(m => m.pin = pinBaru(m.ic)); await saveMurid(k.id); }
+    toast(`PIN ${n} murid dikemas kini. Klik Kemas kini portal ibu bapa.`);
+  };
   /* ujian */
   $$("#nU button").forEach(b => b.onclick = async () => {
     const n = +b.dataset.n; if (n === c.ujian.length) return;
@@ -1760,19 +1785,38 @@ async function loadStaff() {
     try { const kid = await add(n, e, r, k); await after(kid ? [kid] : []); toast(`${n.toUpperCase()} didaftarkan${kid ? " sebagai guru kelas " + kelasById(kid).nama : ""}.${pw() ? " Kata laluan: " + pw() : " Guru boleh log masuk dengan butang Google."}`); render(); }
     catch (er) { toast("Gagal: " + er.message); }
   };
-  $("#stBulkGo").onclick = async () => {
+  const isRole = x => /^(GURU|PENTADBIR|ADMIN)$/i.test(String(x).trim());
+  const daftarPukal = async list => {
     if (pw() && pw().length < 6) return toast("Kata laluan mesti sekurang-kurangnya 6 aksara, atau kosongkan untuk guna Google sahaja.");
-    const lines = $("#stBulk").value.split("\n").map(l => l.split(/[,\t;]/).map(x => x.trim())).filter(x => x[0] && x[1]);
     let ok = 0; const gagal = [], touched = [];
-    for (const [n, e, kn] of lines) {
+    for (const { n, e, role, kn } of list) {
+      if (e.trim().toLowerCase() === String(S.user.emel).toLowerCase()) { gagal.push(`${n} (akaun anda sendiri, dilangkau)`); continue; }
       const k = kn ? c.kelas.find(x => x.nama.toUpperCase().replace(/\s+/g, " ") === kn.toUpperCase().replace(/\s+/g, " ")) : null;
       if (kn && !k) { gagal.push(`${n} (kelas "${kn}" tiada)`); continue; }
-      try { const kid = await add(n, e, "guru", k?.id); if (kid) touched.push(kid); ok++; } catch (er) { gagal.push(`${n} (${er.message})`); }
+      try { const kid = await add(n, e, role, k?.id); if (kid) touched.push(kid); ok++; } catch (er) { gagal.push(`${n} (${er.message})`); }
     }
     await after(touched);
     S.sel.setTab = "pengguna"; render();
-    if (gagal.length) modal(`<h3>${ok}/${lines.length} guru didaftarkan</h3><p class="small" style="margin:0">Tidak berjaya:</p><ul class="small">${gagal.map(x => `<li>${esc(x)}</li>`).join("")}</ul><div class="row" style="justify-content:flex-end"><button class="btn pri" data-close>Tutup</button></div>`);
-    else toast(`${ok} guru didaftarkan${touched.length ? `, ${touched.length} sebagai guru kelas` : ""}.${pw() ? " Kata laluan: " + pw() : ""}`);
+    const adm = list.filter(x => x.role === "admin").length;
+    if (gagal.length) modal(`<h3>${ok}/${list.length} pengguna didaftarkan</h3><p class="small" style="margin:0">Tidak berjaya:</p><ul class="small">${gagal.map(x => `<li>${esc(x)}</li>`).join("")}</ul><div class="row" style="justify-content:flex-end"><button class="btn pri" data-close>Tutup</button></div>`);
+    else toast(`${ok} pengguna didaftarkan${adm ? ` (${adm} pentadbir)` : ""}${touched.length ? `, ${touched.length} sebagai guru kelas` : ""}.`);
+  };
+  $("#stBulkGo").onclick = () => daftarPukal($("#stBulk").value.split("\n").map(l => l.split(/[,\t;]/).map(x => x.trim())).filter(x => x[0] && x[1])
+    .map(([n, e, ...rest]) => ({ n, e, role: rest.some(x => /^(PENTADBIR|ADMIN)$/i.test(x)) ? "admin" : "guru", kn: rest.find(x => x && !isRole(x)) || "" })));
+  $("#stTpl") && ($("#stTpl").onclick = () => dlFile("contoh_guru_mymarkah.csv", CSV_GURU));
+  $("#stCsv").onchange = async ev => {
+    const f = ev.target.files[0]; ev.target.value = ""; if (!f) return;
+    if (typeof XLSX === "undefined") return toast("Pustaka Excel gagal dimuatkan. Semak sambungan internet.");
+    let rows; try { const wb = XLSX.read(await f.arrayBuffer(), { type: "array" }); rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: "" }); } catch (e) { return toast("Gagal membaca fail: " + e.message); }
+    const hi = rows.findIndex(r => r.some(x => /^NAMA/i.test(String(x).trim())) && r.some(x => /^(EMEL|E-?MAIL)/i.test(String(x).trim())));
+    if (hi < 0) return toast("Tajuk lajur NAMA dan EMEL tidak dijumpai. Gunakan contoh CSV guru.");
+    const H = rows[hi].map(x => String(x).trim().toUpperCase());
+    const ni = H.findIndex(x => x.startsWith("NAMA")), ei = H.findIndex(x => /^(EMEL|E-?MAIL)/.test(x)), pi = H.findIndex(x => x.startsWith("PERANAN") || x === "ROLE"), ki = H.findIndex(x => x.startsWith("KELAS"));
+    const list = rows.slice(hi + 1).map(r => ({ n: String(r[ni] ?? "").trim(), e: String(r[ei] ?? "").trim(), role: pi >= 0 && /PENTADBIR|ADMIN/i.test(String(r[pi])) ? "admin" : "guru", kn: ki >= 0 ? String(r[ki] ?? "").trim() : "" })).filter(x => x.n && x.e);
+    if (!list.length) return toast("Tiada baris guru dalam fail.");
+    const adm = list.filter(x => x.role === "admin"), gk = list.filter(x => x.kn);
+    const ok = await ask(`<h3 style="margin-bottom:6px">Import ${list.length} pengguna</h3><ul class="small" style="margin:0;padding-left:18px"><li>${list.length - adm.length} guru, <b>${adm.length} pentadbir</b>${adm.length ? `: ${adm.map(x => esc(x.n)).join(", ")}` : ""}</li><li>${gk.length} guru kelas</li><li>Pengguna sedia ada dengan emel sama akan dikemas kini.</li></ul>`, "Import");
+    if (ok) daftarPukal(list);
   };
 }
 const RULES = `rules_version = '2';
