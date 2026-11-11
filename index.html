@@ -1,1 +1,1614 @@
-test
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>[hidden]{display:none!important}body{margin:0}</style>
+</head>
+<body>
+<title>eMarkah SKJB</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Sistem markah ujian tahunan SK Jalan Bintang: guru isi markah, analisis subjek, kelas dan darjah, portal ibu bapa.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+/* Layout: sticky emerald top bar + left rail (stacks to a scrolling tab strip on phones); work area of dense tables on cream paper. */
+:root{
+  --bg:#f6f3ea; --paper:#fffdf7; --ink:#14251f; --muted:#5d6f67; --line:#e2dccb; --line2:#efe9da;
+  --em:#0b6e4f; --em-ink:#ffffff; --em-soft:#dcefe5; --em-deep:#07513a; --gold:#c9962b; --gold-soft:#f7ecd2;
+  --danger:#b4232c; --danger-soft:#fbe3e3; --warn:#9a6a00; --bar:#07513a; --bar-ink:#f5f1e4;
+  --in-ink:#ffffff; --c1:#0b6e4f; --c2:#c9962b; --c3:#2f6fb0; --c4:#b4532c; --c5:#7a4fa8; --c6:#2f938a; --c7:#a03b6b; --c8:#6b7a2a;
+  --gA:#0b7a4b; --gB:#3f9b3a; --gC:#a08a12; --gD:#c76a12; --gE:#c9481f; --gF:#b4232c; --gTH:#7b7f86;
+  --font-d:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-b:"Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1714; --paper:#16211c; --ink:#e8efe9; --muted:#9db1a7; --line:#2a3a33; --line2:#203029;
+  --em:#2fb383; --em-ink:#06140e; --em-soft:#173b2d; --em-deep:#7fd6b2; --gold:#e2b552; --gold-soft:#3a3018;
+  --danger:#ff7b7b; --danger-soft:#3c1d1f; --warn:#e6b84c; --bar:#0c3d2d; --bar-ink:#e9f3ec;
+  --in-ink:#0b1410; --c1:#3fcf8e; --c2:#e2b552; --c3:#6fa8ff; --c4:#f08a5d; --c5:#b48cf0; --c6:#5fd1c2; --c7:#ef7fb0; --c8:#b8c86a;
+  --gA:#3fcf8e; --gB:#8ad16f; --gC:#e0c64a; --gD:#f0a050; --gE:#f07e5a; --gF:#ff6b6b; --gTH:#9aa0a8; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1714; --paper:#16211c; --ink:#e8efe9; --muted:#9db1a7; --line:#2a3a33; --line2:#203029;
+  --em:#2fb383; --em-ink:#06140e; --em-soft:#173b2d; --em-deep:#7fd6b2; --gold:#e2b552; --gold-soft:#3a3018;
+  --danger:#ff7b7b; --danger-soft:#3c1d1f; --warn:#e6b84c; --bar:#0c3d2d; --bar-ink:#e9f3ec;
+  --in-ink:#0b1410; --c1:#3fcf8e; --c2:#e2b552; --c3:#6fa8ff; --c4:#f08a5d; --c5:#b48cf0; --c6:#5fd1c2; --c7:#ef7fb0; --c8:#b8c86a;
+  --gA:#3fcf8e; --gB:#8ad16f; --gC:#e0c64a; --gD:#f0a050; --gE:#f07e5a; --gF:#ff6b6b; --gTH:#9aa0a8; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{background:var(--bg);min-height:100%}
+body{color:var(--ink);font-family:var(--font-b);font-size:14px;line-height:1.45}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bar)}
+h1,h2,h3{font-family:var(--font-d);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h2{font-size:1.35rem}
+h3{font-size:1.02rem}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.num,table{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.eyebrow{font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.grow{flex:1 1 auto;min-width:0}
+.stack{display:grid;gap:14px;align-content:start}
+
+/* buttons & inputs */
+.btn{border:1px solid var(--line);background:var(--paper);padding:8px 14px;border-radius:8px;font-weight:600;display:inline-flex;gap:6px;align-items:center;white-space:nowrap}
+.btn:hover{border-color:var(--em)}
+.btn.pri{background:var(--em);border-color:var(--em);color:var(--em-ink)}
+.btn.pri:hover{filter:brightness(1.07)}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:#1b1404}
+.btn.danger{color:var(--danger);border-color:var(--danger-soft)}
+.btn.sm{padding:5px 10px;font-size:12.5px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.inp,select.inp,textarea.inp{border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:8px 10px;min-width:0}
+.inp:focus{border-color:var(--em);outline:none;box-shadow:0 0 0 3px var(--em-soft)}
+label.f{display:grid;gap:4px;font-size:12.5px;color:var(--muted);font-weight:600}
+label.f .inp{color:var(--ink);font-weight:400;font-size:14px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--paper)}
+.seg button{border:0;background:none;padding:7px 12px;font-weight:600;color:var(--muted)}
+.seg button.on{background:var(--em);color:var(--em-ink)}
+
+/* login */
+.login{min-height:100%;display:grid;place-items:center;padding-block:32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.login-card{width:min(940px,100%);display:grid;grid-template-columns:1.05fr 1fr;background:var(--paper);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.login-hero{background:var(--bar);color:var(--bar-ink);padding:34px;display:grid;align-content:space-between;gap:28px;position:relative;overflow:hidden}
+.login-hero h1{font-size:clamp(2rem,4.4vw,3rem);line-height:1;font-weight:800}
+.login-hero .grid-deco{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;opacity:.95}
+.login-hero .grid-deco span{aspect-ratio:1;border-radius:4px;display:grid;place-items:center;font-family:var(--font-d);font-weight:700;font-size:12px;background:rgba(255,255,255,.1)}
+.login-hero .grid-deco span.a{background:var(--gold);color:#1b1404}
+.login-body{padding:30px;display:grid;gap:18px;align-content:start}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line)}
+.tabs button{border:0;background:none;padding:9px 12px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button.on{color:var(--em);border-color:var(--em)}
+.demo-note{background:var(--gold-soft);border-radius:10px;padding:10px 12px;font-size:12.5px}
+.demo-note code{font-weight:700}
+@media (max-width:760px){.login-card{grid-template-columns:1fr}.login-hero{padding:24px}.login-hero .grid-deco{display:none}}
+
+/* shell */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bar);color:var(--bar-ink);padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.top .brand{font-family:var(--font-d);font-weight:800;font-size:1.15rem}
+.top .brand small{font-family:var(--font-b);font-weight:500;opacity:.8;font-size:12px;margin-left:8px}
+.top select{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:inherit;border-radius:7px;padding:5px 8px}
+.top select option{color:#14251f;background:#fff}
+.top .who{font-size:12.5px;opacity:.9}
+.top .btn{background:transparent;border-color:rgba(255,255,255,.35);color:inherit}
+.shell{display:grid;grid-template-columns:200px 1fr;min-height:calc(100% - 56px)}
+.nav{border-right:1px solid var(--line);padding:16px 10px;display:grid;gap:2px;align-content:start;position:sticky;top:56px;height:calc(100vh - 56px)}
+.nav button{border:0;background:none;text-align:left;padding:9px 12px;border-radius:8px;font-weight:600;color:var(--muted);display:flex;gap:10px;align-items:center}
+.nav button:hover{background:var(--line2);color:var(--ink)}
+.nav button.on{background:var(--em-soft);color:var(--em-deep)}
+.nav .ico{width:18px;text-align:center;font-family:var(--font-d);font-weight:800}
+.main{padding-block:22px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));min-width:0;display:grid;gap:18px;align-content:start}
+@media (min-width:900px){.main{padding-left:28px;padding-right:max(28px,env(safe-area-inset-right,0px))}}
+@media (max-width:860px){.shell{grid-template-columns:1fr}.nav{position:static;height:auto;display:flex;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:8px max(16px,env(safe-area-inset-left,0px))}.nav button{white-space:nowrap}}
+.head{display:flex;gap:12px;align-items:end;justify-content:space-between;flex-wrap:wrap}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:16px;min-width:0}
+.panel>h3{margin-bottom:10px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+.banner{border-radius:9px;padding:10px 12px;font-size:13px;background:var(--gold-soft)}
+.banner.lock{background:var(--danger-soft);color:var(--danger)}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:grid;gap:4px}
+.stat b{font-family:var(--font-d);font-size:1.8rem;line-height:1.05}
+.prog{height:6px;background:var(--line2);border-radius:4px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--em)}
+
+/* tables */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--paper)}
+table.t{border-collapse:collapse;width:100%;font-size:13px}
+.t th,.t td{padding:6px 8px;border-bottom:1px solid var(--line2);text-align:center;white-space:nowrap}
+.t th{background:var(--em-soft);color:var(--em-deep);font-weight:700;font-size:12px;position:sticky;top:0;z-index:1}
+.t td.l,.t th.l{text-align:left}
+.t tr:last-child td{border-bottom:0}
+.t tr.sum td{background:var(--gold-soft);font-weight:700}
+.t tbody tr:hover td{background:var(--line2)}
+.t .name{white-space:normal;min-width:190px;max-width:300px}
+.t .sticky{position:sticky;left:0;background:var(--paper);z-index:2}
+.t th.sticky{z-index:3;background:var(--em-soft)}
+.pct{color:var(--muted);font-size:11.5px}
+.g{display:inline-grid;place-items:center;min-width:26px;height:22px;padding:0 5px;border-radius:6px;font-weight:700;font-size:12px;color:#fff}
+.g-A{background:var(--gA)}.g-B{background:var(--gB)}.g-C{background:var(--gC)}.g-D{background:var(--gD)}.g-E{background:var(--gE)}.g-F{background:var(--gF)}.g-TH{background:var(--gTH)}
+:root[data-theme="dark"] .g{color:#0b1410}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .g{color:#0b1410}}
+.pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:700}
+.pill.ok{background:var(--em-soft);color:var(--em-deep)}
+.pill.no{background:var(--danger-soft);color:var(--danger)}
+.pill.mid{background:var(--gold-soft);color:var(--warn)}
+.up{color:var(--gA);font-weight:700}.down{color:var(--gF);font-weight:700}
+
+/* mark entry */
+.mk{width:58px;text-align:center;border:1px solid var(--line);border-radius:6px;padding:5px 2px;background:var(--bg)}
+.mk:focus{outline:none;border-color:var(--em);box-shadow:0 0 0 3px var(--em-soft);background:var(--paper)}
+.mk.bad{border-color:var(--danger);background:var(--danger-soft)}
+.mk:disabled{opacity:.6}
+.save-st{font-size:12px;color:var(--muted)}
+.save-st.ok{color:var(--em)}
+
+/* stacked grade bar */
+.gbar{display:flex;height:12px;border-radius:4px;overflow:hidden;min-width:120px;background:var(--line2)}
+.gbar i{display:block;height:100%}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;gap:5px;align-items:center}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+/* slip */
+.slip{background:var(--paper);border:1px solid var(--line);border-radius:12px;max-width:760px;width:100%;overflow:hidden}
+.slip-h{background:var(--bar);color:var(--bar-ink);padding:16px 20px;display:flex;gap:14px;align-items:center}
+.slip-h .crest{width:46px;height:46px;border-radius:50%;background:var(--gold);color:#1b1404;display:grid;place-items:center;font-family:var(--font-d);font-weight:800;flex:none}
+.slip-b{padding:16px 20px;display:grid;gap:14px}
+.kv{display:grid;grid-template-columns:150px 1fr;gap:4px 12px;font-size:13.5px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;font-weight:600}
+.sign{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:20px;font-size:12px;text-align:center}
+.sign div{border-top:1px dotted var(--muted);padding-top:6px}
+.slips{display:grid;gap:18px}
+
+/* modal + toast */
+.modal{position:fixed;inset:0;background:rgba(10,20,15,.45);display:grid;place-items:center;z-index:50;padding:16px}
+.modal .box{background:var(--paper);border-radius:14px;padding:20px;width:min(520px,100%);display:grid;gap:14px;max-height:90vh;overflow:auto;border:1px solid var(--line)}
+.toast{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;z-index:60;font-weight:600;max-width:90vw}
+
+/* parent */
+.kids{display:flex;gap:8px;flex-wrap:wrap}
+.kid{border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:8px 12px;text-align:left;display:grid}
+.kid.on{border-color:var(--em);box-shadow:0 0 0 3px var(--em-soft)}
+.trend{display:grid;gap:8px}
+.trend .tr{display:grid;grid-template-columns:minmax(90px,170px) 1fr;gap:10px;align-items:center;font-size:12.5px}
+.trend .bars{display:grid;gap:3px}
+.trend .bar{height:10px;border-radius:3px;background:var(--em);display:flex;align-items:center}
+.trend .bar span{font-size:10.5px;margin-left:calc(100% + 6px);white-space:nowrap;color:var(--muted)}
+.ex-key{display:flex;gap:12px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.ex-key i{display:inline-block;width:14px;height:8px;border-radius:2px;margin-right:4px}
+
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.chk{display:inline-flex;gap:4px;align-items:center;font-size:12.5px;margin-right:6px}
+pre.code{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;overflow:auto;font-size:12px;max-height:320px}
+@media print{
+  body::before,.top,.nav,.toolbar,.noprint,.head .btn{display:none!important}
+  .shell{display:block}.main{padding:0}
+  .slip{border:0;page-break-after:always;max-width:none}
+  .slip-h{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .g,.t th{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+
+.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr));gap:14px}
+.dcard{border:1px solid var(--line);background:var(--paper);border-radius:14px;padding:18px;text-align:left;display:grid;gap:12px;transition:border-color .15s,transform .15s,box-shadow .15s}
+.dcard:hover:not(:disabled){border-color:var(--em);transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.07)}
+.dcard:disabled{opacity:.55;cursor:not-allowed}
+.dcard .dn{font-family:var(--font-d);font-weight:800;font-size:1.6rem;color:var(--em-deep)}
+.dchips{display:flex;flex-wrap:wrap;gap:5px}
+.dchips span{font-size:11px;padding:2px 8px;border-radius:99px;background:var(--em-soft);color:var(--em-deep);font-weight:700;letter-spacing:.02em}
+.crumb{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.ktabs{display:flex;gap:8px;flex-wrap:wrap}
+.ktabs button{border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:8px 14px;display:grid;gap:1px;text-align:left;min-width:128px}
+.ktabs button:hover:not(.on){border-color:var(--em)}
+.ktabs .kn{font-weight:700;letter-spacing:.02em}
+.ktabs .km{font-size:11px;color:var(--muted)}
+.ktabs button.on{background:var(--em);border-color:var(--em);color:var(--em-ink)}
+.ktabs button.on .km{color:inherit;opacity:.85}
+/* exam tabs, save bar, audit */
+.extabs{display:flex;border-bottom:2px solid var(--line);overflow-x:auto}
+.extabs button{border:0;background:none;padding:10px 18px 9px;display:grid;gap:2px;text-align:left;border-bottom:3px solid transparent;margin-bottom:-2px;color:var(--muted);white-space:nowrap;border-radius:8px 8px 0 0}
+.extabs .ex-n{font-family:var(--font-d);font-weight:700;font-size:1rem}
+.extabs .ex-m{font-size:11.5px}
+.extabs button.on{color:var(--em-deep);border-bottom-color:var(--em);background:var(--em-soft)}
+.extabs button:hover:not(.on){color:var(--ink);background:var(--line2)}
+.savebar{position:sticky;bottom:calc(10px + env(safe-area-inset-bottom,0px));display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 14px;box-shadow:0 6px 24px rgba(0,0,0,.10);z-index:5}
+.savebar.dirty{border-color:var(--gold);background:var(--gold-soft)}
+.savebar .btn{min-width:170px;justify-content:center}
+.save-st.err{color:var(--danger);font-weight:600}
+.auditbar{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:13px}
+.mk.chg,.inp.chg{border-color:var(--gold);background:var(--gold-soft)}
+.t tfoot td{background:var(--line2);font-size:11px;line-height:1.25;vertical-align:top}
+.t tfoot td.sticky{background:var(--line2)}
+/* charts */
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:16px}
+.ch{width:100%;height:auto;display:block}
+.ch text{fill:var(--muted);font-size:11px;font-family:var(--font-b)}
+.ch text.val{fill:var(--ink);font-weight:700}
+.ch text.in{fill:var(--in-ink);font-weight:700;font-size:10.5px}
+.ch .grid{stroke:var(--line2);stroke-width:1}
+.ch .axis{stroke:var(--line);stroke-width:1}
+/* semakan */
+.smt td{padding:3px}
+.cell{border:0;border-radius:7px;padding:5px 6px;min-width:66px;width:100%;display:grid;gap:1px;line-height:1.2}
+.cell b{font-size:13px}
+.cell span{font-size:10.5px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:92px}
+.cell.ok{background:var(--em-soft);color:var(--em-deep)}
+.cell.part{background:var(--gold-soft);color:var(--warn)}
+.cell.none{background:var(--danger-soft);color:var(--danger)}
+.cell.opt{background:var(--line2);color:var(--muted)}
+.guru-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:12px;margin-top:10px}
+.gl{border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
+.gl ul{margin:8px 0 0;padding-left:18px;display:grid;gap:4px;font-size:13px}
+.linkbtn{border:0;background:none;padding:0;color:var(--em);font-weight:600;text-decoration:underline;text-underline-offset:2px;text-align:left}
+/* switches */
+.slipset{display:grid;grid-template-columns:minmax(240px,1fr) minmax(0,1.4fr);gap:20px;align-items:start}
+@media (max-width:900px){.slipset{grid-template-columns:1fr}}
+.toggles{display:grid;gap:0}
+.toggles label{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:8px 2px;border-bottom:1px solid var(--line2);cursor:pointer}
+.sw{position:relative;display:inline-block;width:42px;height:24px;flex:none}
+.sw input{opacity:0;width:0;height:0;position:absolute}
+.sw span{position:absolute;inset:0;background:var(--line);border-radius:24px;transition:background .15s}
+.sw span::before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:var(--paper);border-radius:50%;transition:transform .15s;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.sw input:checked+span{background:var(--em)}
+.sw input:checked+span::before{transform:translateX(18px)}
+.sw input:focus-visible+span{outline:2px solid var(--gold);outline-offset:2px}
+@media print{.savebar,.extabs{display:none!important}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div id="app"></div>
+
+<script>
+/* =========================================================
+   eMarkah SKJB — sistem markah ujian tahunan
+   ---------------------------------------------------------
+   KONFIGURASI PENGHOSAN (GitHub Pages / Firebase Hosting):
+   Tampal firebaseConfig projek anda di bawah. Jika dibiarkan
+   null, aplikasi berjalan dalam MOD DEMO (data dalam pelayar).
+   ========================================================= */
+const FIREBASE_CONFIG = null; /* contoh: { apiKey:"...", authDomain:"skjb-icthub.firebaseapp.com", projectId:"skjb-icthub", ... } */
+const ADMIN_EMAILS = [];      /* emel pentadbir utama, cth: ["pentadbir@moe-dl.edu.my"] */
+const FB_VER = "10.12.2";
+
+/* ---------------- utilities ---------------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const uid = () => Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
+const PIN_CH = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+const genPin = () => Array.from({ length: 6 }, () => PIN_CH[Math.floor(Math.random() * PIN_CH.length)]).join("");
+const fmt = (n, d = 2) => (n == null || isNaN(n)) ? "–" : Number(n).toFixed(d);
+const pc = (a, b) => b ? (a / b * 100) : 0;
+const topLevel = (() => { try { return window.self === window.top; } catch (e) { return false; } })();
+const normIC = s => String(s ?? "").replace(/[^0-9A-Za-z]/g, "").toUpperCase();
+async function sha256(t) {
+  const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t));
+  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, "0")).join("");
+}
+const portalKey = (ic, pin) => sha256("emarkah|" + normIC(ic) + "|" + String(pin).trim().toUpperCase());
+function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+function toast(msg) {
+  const d = document.createElement("div"); d.className = "toast"; d.textContent = msg;
+  document.body.appendChild(d); setTimeout(() => d.remove(), 2600);
+}
+function ask(msg, okLabel = "Ya, teruskan", danger = true) {
+  return new Promise(res => {
+    const m = document.createElement("div"); m.className = "modal";
+    m.innerHTML = `<div class="box" role="dialog" aria-modal="true"><div>${msg}</div><div class="row" style="justify-content:flex-end"><button class="btn" data-x="0">Batal</button><button class="btn ${danger ? "pri" : "pri"}" data-x="1">${esc(okLabel)}</button></div></div>`;
+    m.addEventListener("click", e => { const x = e.target.dataset.x; if (x != null) { m.remove(); res(x === "1"); } });
+    document.body.appendChild(m); $("[data-x='1']", m).focus();
+  });
+}
+function modal(html, onMount) {
+  const m = document.createElement("div"); m.className = "modal";
+  m.innerHTML = `<div class="box" role="dialog" aria-modal="true">${html}</div>`;
+  m.addEventListener("click", e => { if (e.target === m || e.target.dataset.close != null) m.remove(); });
+  document.body.appendChild(m); onMount && onMount(m, () => m.remove()); return m;
+}
+
+/* ---------------- storage adapters ---------------- */
+const mem = new Map();
+const LS = {
+  get(k) { try { const v = localStorage.getItem(k); return v == null ? (mem.has(k) ? mem.get(k) : null) : JSON.parse(v); } catch (e) { return mem.has(k) ? mem.get(k) : null; } },
+  set(k, v) { mem.set(k, v); try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } },
+  del(k) { mem.delete(k); try { localStorage.removeItem(k); } catch (e) { } },
+  keys() { const out = new Set(mem.keys()); try { for (let i = 0; i < localStorage.length; i++) out.add(localStorage.key(i)); } catch (e) { } return [...out]; }
+};
+function deepPatch(t, o) { for (const k in o) { const v = o[k]; if (v === null) delete t[k]; else if (typeof v === "object" && !Array.isArray(v)) { if (typeof t[k] !== "object" || t[k] === null) t[k] = {}; deepPatch(t[k], v); } else t[k] = v; } return t; }
+class LocalDB {
+  constructor() { this.ns = "emarkah:"; }
+  k(c, i) { return this.ns + c + "/" + i; }
+  async get(c, i) { return structuredClone(LS.get(this.k(c, i))); }
+  async set(c, i, d) { LS.set(this.k(c, i), structuredClone(d)); }
+  async del(c, i) { LS.del(this.k(c, i)); }
+  async patch(c, i, obj) { const o = LS.get(this.k(c, i)) || {}; deepPatch(o, obj); LS.set(this.k(c, i), o); }
+  async list(c, prefix = "") {
+    const p = this.ns + c + "/" + prefix;
+    return LS.keys().filter(k => k && k.startsWith(p)).map(k => ({ id: k.slice((this.ns + c + "/").length), data: LS.get(k) }));
+  }
+}
+class FireDB {
+  constructor(fb) { this.fb = fb; }
+  async get(c, i) { const s = await this.fb.getDoc(this.fb.doc(this.fb.db, c, i)); return s.exists() ? s.data() : null; }
+  async set(c, i, d) { await this.fb.setDoc(this.fb.doc(this.fb.db, c, i), JSON.parse(JSON.stringify(d))); }
+  async del(c, i) { await this.fb.deleteDoc(this.fb.doc(this.fb.db, c, i)); }
+  async patch(c, i, obj) {
+    const f = this.fb; const conv = o => { if (o === null) return f.deleteField(); if (typeof o === "object") { const r = {}; for (const k in o) r[k] = conv(o[k]); return r; } return o; };
+    await f.setDoc(f.doc(f.db, c, i), conv(obj), { merge: true });
+  }
+  async list(c, prefix = "") {
+    const f = this.fb, col = f.collection(f.db, c);
+    const q = prefix ? f.query(col, f.where(f.documentId(), ">=", prefix), f.where(f.documentId(), "<", prefix + "")) : col;
+    const s = await f.getDocs(q); return s.docs.map(d => ({ id: d.id, data: d.data() }));
+  }
+}
+async function loadFirebase(cfg) {
+  const base = `https://www.gstatic.com/firebasejs/${FB_VER}/`;
+  const [app, auth, fs] = await Promise.all([import(base + "firebase-app.js"), import(base + "firebase-auth.js"), import(base + "firebase-firestore.js")]);
+  const a = app.initializeApp(cfg);
+  return { ...app, ...auth, ...fs, app: a, auth: auth.getAuth(a), db: fs.getFirestore(a), cfg };
+}
+
+/* ---------------- default config ---------------- */
+const DEF_SKALA = [
+  { g: "A", min: 82, label: "CEMERLANG", lulus: true },
+  { g: "B", min: 66, label: "KEPUJIAN", lulus: true },
+  { g: "C", min: 50, label: "BAIK", lulus: true },
+  { g: "D", min: 35, label: "MEMUASKAN", lulus: true },
+  { g: "E", min: 20, label: "MENCAPAI TAHAP MINIMUM", lulus: true },
+  { g: "F", min: 0, label: "BELUM MENCAPAI TAHAP MINIMUM", lulus: false }
+];
+const ALL = [1, 2, 3, 4, 5, 6], UP = [4, 5, 6];
+const DEF_SUBJEK = [
+  { kod: "BM", nama: "BAHASA MELAYU", darjah: ALL },
+  { kod: "BI", nama: "BAHASA INGGERIS", darjah: ALL },
+  { kod: "MT", nama: "MATEMATIK", darjah: ALL },
+  { kod: "SN", nama: "SAINS", darjah: ALL },
+  { kod: "SEJ", nama: "SEJARAH", darjah: UP },
+  { kod: "RBT", nama: "REKA BENTUK TEKNOLOGI", darjah: UP },
+  { kod: "PSV", nama: "PENDIDIKAN SENI VISUAL", darjah: ALL },
+  { kod: "PMZ", nama: "PENDIDIKAN MUZIK", darjah: ALL },
+  { kod: "PJPK", nama: "PENDIDIKAN JASMANI DAN PENDIDIKAN KESIHATAN", darjah: ALL },
+  { kod: "PI", nama: "PENDIDIKAN ISLAM", darjah: ALL, pilihan: true },
+  { kod: "PM", nama: "PENDIDIKAN MORAL", darjah: ALL, pilihan: true },
+  { kod: "BA", nama: "BAHASA ARAB", darjah: ALL, pilihan: true },
+  { kod: "BC", nama: "BAHASA CINA", darjah: ALL, pilihan: true }
+];
+const DEF_ULASAN = [
+  "Teruskan berusaha untuk kejayaan lebih cemerlang untuk masa depan yang gemilang.",
+  "Sekalung tahniah atas kejayaan anda. Teruskan usaha dengan lebih gigih untuk kejayaan lebih baik.",
+  "Prestasi anda memberangsangkan. Usaha lagi untuk kejayaan yang lebih cemerlang.",
+  "Usaha anda telah menunjukkan hasil yang agak baik. Gandakan usaha untuk mencapai kejayaan yang lebih baik.",
+  "Keputusan masih di tahap sederhana. Ia memerlukan komitmen daripada anda untuk memperbaiki pencapaian.",
+  "Beberapa mata pelajaran masih belum mencapai tahap yang sepatutnya. Usaha dengan lebih kuat bagi memperbaiki prestasi.",
+  "Berikan lebih tumpuan kepada mata pelajaran tertentu.",
+  "Tingkatkan usaha anda. Anda pasti akan berjaya dengan lebih baik daripada hari ini.",
+  "Hargai masa dan tingkatkan usaha anda.",
+  "Pencapaian masih lemah. Tingkatkan usaha dan ubah sikap demi masa depan anda."
+];
+const NAMA_KELAS = ["ACHIEVER", "BRILLIANT", "CHAMPION", "DYNAMIC", "ENERGETIC"];
+const stdKelas = () => ALL.flatMap(d => NAMA_KELAS.map((n, i) => ({ id: `k${d}${"abcde"[i]}`, nama: `${d} ${n}`, darjah: d, guru: "" })));
+function defaultCfg(tahun) {
+  return {
+    tahun: String(tahun),
+    sekolah: { nama: "SK JALAN BINTANG", alamat: "98000 MIRI, SARAWAK", gb: "", url: "" },
+    skala: structuredClone(DEF_SKALA),
+    subjek: structuredClone(DEF_SUBJEK),
+    kelas: stdKelas(),
+    ujian: [
+      { id: "U1", nama: "SUMATIF 1", kunci: false, terbit: false },
+      { id: "U2", nama: "SUMATIF 2", kunci: false, terbit: false }
+    ],
+    ulasan: [...DEF_ULASAN]
+  };
+}
+
+/* ---------------- state ---------------- */
+const S = {
+  mode: "local", db: null, fb: null, user: null, meta: null, tahun: null, cfg: null,
+  murid: {}, markah: {}, view: "utama",
+  sel: { ujian: null, kelas: null, darjah: null, subjek: null, isiMod: "subjek", an: "kelasD", slipKelas: null, slipMurid: "", muridKelas: null },
+  patch: new Map(), audit: {},
+  parent: { kids: [], cur: 0, ex: null }
+};
+const isAdmin = () => S.user?.peranan === "admin";
+const kelasById = id => S.cfg.kelas.find(k => k.id === id);
+const darjahList = () => [...new Set(S.cfg.kelas.map(k => +k.darjah))].sort((a, b) => a - b);
+const kelasOfDarjah = d => S.cfg.kelas.filter(k => +k.darjah === +d);
+const subjOf = d => S.cfg.subjek.filter(s => (s.darjah || ALL).map(Number).includes(+d));
+const muridOf = kid => S.murid[kid] || [];
+const mkKey = (u, k) => `${u}_${k}`;
+const recOf = (u, k, mid) => (S.markah[mkKey(u, k)] || {})[mid];
+
+/* ---------------- grading & computation ---------------- */
+function skalaSorted(cfg = S.cfg) { return [...cfg.skala].sort((a, b) => b.min - a.min); }
+function gradeOf(v, cfg = S.cfg) {
+  if (v === "TH") return "TH"; if (v == null || v === "") return "";
+  const n = +v; for (const s of skalaSorted(cfg)) if (n >= s.min) return s.g; return skalaSorted(cfg).at(-1).g;
+}
+function mataOf(g, cfg = S.cfg) { const i = skalaSorted(cfg).findIndex(s => s.g === g); return i < 0 ? null : i + 1; }
+function labelOf(g, cfg = S.cfg) { if (g === "TH") return "TIDAK HADIR"; return skalaSorted(cfg).find(s => s.g === g)?.label || ""; }
+function lulusOf(g, cfg = S.cfg) { return !!skalaSorted(cfg).find(s => s.g === g)?.lulus; }
+const KEP_GAGAL = "BELUM MENCAPAI TAHAP MINIMUM";
+const kepPill = kp => kp ? `<span class="pill ${kp === "LULUS" ? "ok" : kp === "TIDAK HADIR" ? "mid" : "no"}">${kp === KEP_GAGAL ? "BELUM CAPAI MINIMUM" : kp}</span>` : "–";
+function parseMark(s) {
+  s = String(s ?? "").trim().toUpperCase();
+  if (!s) return { ok: true, v: null };
+  if (s === "TH" || s === "T") return { ok: true, v: "TH" };
+  if (!/^\d{1,3}(\.\d+)?$/.test(s)) return { ok: false };
+  const n = +s; if (n > 100) return { ok: false }; return { ok: true, v: n };
+}
+function kira(rec, subjList, cfg = S.cfg) {
+  const m = rec?.m || {}; const rows = []; const cnt = {}; let jum = 0, hadir = 0, mata = 0, ada = 0, gagal = false;
+  for (const s of subjList) {
+    const v = m[s.kod]; if (v == null || v === "") continue;
+    ada++; const g = gradeOf(v, cfg); rows.push({ kod: s.kod, nama: s.nama, v, g, label: labelOf(g, cfg) });
+    cnt[g] = (cnt[g] || 0) + 1; if (v === "TH") continue;
+    hadir++; jum += +v; mata += mataOf(g, cfg); if (!lulusOf(g, cfg)) gagal = true;
+  }
+  const order = [...skalaSorted(cfg).map(s => s.g), "TH"];
+  const analisis = order.filter(g => cnt[g]).map(g => `${cnt[g]}[${g}]`).join(" ");
+  /* as in the school's Excel: for a pupil's GP, a TH subject counts at the lowest grade's value */
+  const th = cnt.TH || 0, maxM = skalaSorted(cfg).length;
+  const keputusan = !ada ? "" : !hadir ? "TIDAK HADIR" : gagal ? KEP_GAGAL : "LULUS";
+  return { rows, cnt, gagal: gagal ? 1 : 0, jumlah: jum, hadir, ada, purata: hadir ? jum / hadir : null, gp: hadir ? (mata + th * maxM) / (hadir + th) : null, keputusan, analisis, ulasan: rec?.ulasan || "", kehadiran: rec?.hadir || "" };
+}
+function rank(list, key) {
+  /* same order as the school's Excel: passing pupils first, then lowest GP, then highest total */
+  const r = list.filter(x => x.k.hadir > 0).sort((a, b) => (a.k.gagal - b.k.gagal) || (a.k.gp - b.k.gp) || (b.k.jumlah - a.k.jumlah) || a.m.nama.localeCompare(b.m.nama));
+  r.forEach((x, i) => { x[key] = i + 1; x[key + "N"] = r.length; });
+}
+/* results for a whole darjah for one exam (with KDK + KDT) */
+function hasilDarjah(ujian, d) {
+  const subj = subjOf(d); const out = [];
+  for (const k of kelasOfDarjah(d)) {
+    const grp = muridOf(k.id).map(m => ({ m, kelas: k, k: kira(recOf(ujian, k.id, m.id), subj) }));
+    rank(grp, "kdk"); out.push(...grp);
+  }
+  rank(out, "kdt"); return out;
+}
+function aggSubjek(rows, kod) {
+  const c = { daftar: 0, hadir: 0, mata: 0, lulus: 0 }; const g = {};
+  for (const r of rows) {
+    const it = r.k.rows.find(x => x.kod === kod); if (!it) continue;
+    c.daftar++; g[it.g] = (g[it.g] || 0) + 1; if (it.g === "TH") continue;
+    c.hadir++; c.mata += mataOf(it.g); if (lulusOf(it.g)) c.lulus++;
+  }
+  return { ...c, g, gp: c.hadir ? c.mata / c.hadir : null, gagal: c.hadir - c.lulus };
+}
+function aggKeseluruhan(rows) {
+  const g = {}; let ent = 0, mata = 0, th = 0; let daftar = 0, hadir = 0, lulus = 0, gagal = 0;
+  for (const r of rows) {
+    if (r.k.ada) daftar++; if (r.k.hadir) hadir++;
+    if (r.k.keputusan === "LULUS") lulus++; if (r.k.keputusan === KEP_GAGAL) gagal++;
+    for (const it of r.k.rows) { g[it.g] = (g[it.g] || 0) + 1; if (it.g === "TH") { th++; continue; } ent++; mata += mataOf(it.g); }
+  }
+  return { g, ent, th, gp: ent ? mata / ent : null, daftar, hadir, lulus, gagal, bil: rows.length };
+}
+
+/* ---------------- persistence ---------------- */
+async function saveMeta() { await S.db.set("app", "meta", S.meta); }
+async function saveCfg() { await S.db.set("tahun", S.tahun, S.cfg); }
+async function saveMurid(kid) { await S.db.set("murid", `${S.tahun}_${kid}`, { senarai: muridOf(kid) }); }
+async function saveMarkahNow(key) { await S.db.set("markah", `${S.tahun}_${key}`, { data: S.markah[key] || {}, audit: S.audit[key] || {} }); }
+/* Teachers press "Simpan". Only the cells that changed are written (cell-level merge), so two
+   teachers keying different subjects for the same class never overwrite each other.
+   Every save also records who last updated each subject (audit). */
+const fmtMasa = iso => iso ? new Date(iso).toLocaleString("ms-MY", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
+function pendingCount() { let n = 0; for (const [, o] of S.patch) for (const mid in o) { const r = o[mid]; n += Object.keys(r.m || {}).length + ("ulasan" in r ? 1 : 0) + ("hadir" in r ? 1 : 0); } return n; }
+async function flushNow() {
+  const items = [...S.patch]; if (!items.length) return true;
+  S.patch.clear(); setSaveSt("Menyimpan…"); updSaveBtn(true);
+  const oleh = { nama: S.user?.nama || "", emel: S.user?.emel || "", masa: new Date().toISOString() };
+  const left = [];
+  for (const [k, o] of items) {
+    const au = {};
+    for (const mid in o) { for (const s in (o[mid].m || {})) au[s] = oleh; if ("ulasan" in o[mid] || "hadir" in o[mid]) au._ulasan = oleh; }
+    try { await S.db.patch("markah", `${S.tahun}_${k}`, { data: o, audit: au }); S.audit[k] = { ...(S.audit[k] || {}), ...au }; }
+    catch (e) { left.push([k, o, e]); }
+  }
+  for (const [k, o] of left) S.patch.set(k, deepPatch(o, S.patch.get(k) || {}));
+  if (left.length) { setSaveSt("Gagal simpan: " + left[0][2].message + ". Cuba tekan Simpan sekali lagi.", false, true); updSaveBtn(); return false; }
+  setSaveSt("Semua markah telah disimpan · " + fmtMasa(oleh.masa), true); updSaveBtn();
+  if (S.view === "isi") renderAuditOnly();
+  return true;
+}
+async function discardPatch() {
+  const keys = [...S.patch.keys()]; S.patch.clear();
+  for (const k of keys) { const d = await S.db.get("markah", `${S.tahun}_${k}`).catch(() => null); S.markah[k] = d?.data || {}; S.audit[k] = d?.audit || {}; }
+}
+function choose(msg, buttons) {
+  return new Promise(res => {
+    const m = document.createElement("div"); m.className = "modal";
+    m.innerHTML = `<div class="box" role="dialog" aria-modal="true"><div>${msg}</div><div class="row" style="justify-content:flex-end">${buttons.map(b => `<button class="btn ${b[2] || ""}" data-x="${b[0]}">${esc(b[1])}</button>`).join("")}</div></div>`;
+    m.addEventListener("click", e => { const x = e.target.dataset.x; if (x != null) { m.remove(); res(x); } });
+    document.body.appendChild(m); $$("[data-x]", m).at(-1).focus();
+  });
+}
+/* ask before leaving the mark-entry screen with unsaved marks */
+async function guardUnsaved() {
+  if (!S.patch.size) return true;
+  const c = await choose(`<h3 style="margin-bottom:6px">Markah belum disimpan</h3>Ada <b>${pendingCount()}</b> perubahan yang belum disimpan. Simpan sekarang?`, [["batal", "Kembali"], ["buang", "Buang perubahan", "danger"], ["simpan", "Simpan & teruskan", "pri"]]);
+  if (c === "simpan") return await flushNow();
+  if (c === "buang") { await discardPatch(); return true; }
+  return false;
+}
+async function refreshMarkah(key) {
+  if (S.mode !== "firebase" || S.patch.has(key)) return;
+  try { const d = await S.db.get("markah", `${S.tahun}_${key}`); S.markah[key] = d?.data || {}; S.audit[key] = d?.audit || {}; } catch (e) { toast("Gagal memuat semula: " + e.message); }
+}
+function setSaveSt(t, ok, err) { const el = $("#saveSt"); if (el) { el.textContent = t; el.className = "save-st" + (ok ? " ok" : "") + (err ? " err" : ""); } }
+function updSaveBtn(busy) {
+  const b = $("#saveBtn"); if (!b) return; const n = pendingCount();
+  b.disabled = busy || !n; b.textContent = busy ? "Menyimpan…" : n ? `Simpan markah (${n})` : "Simpan markah";
+  $("#saveBar")?.classList.toggle("dirty", !!n);
+}
+function markDirty(key, mid, path, v) {
+  const o = S.patch.get(key) || {}; let t = (o[mid] = o[mid] || {});
+  for (let i = 0; i < path.length - 1; i++) t = (t[path[i]] = t[path[i]] || {});
+  t[path.at(-1)] = (v == null || v === "") ? null : v; S.patch.set(key, o);
+  setSaveSt(`${pendingCount()} perubahan belum disimpan. Tekan Simpan markah.`); updSaveBtn();
+}
+
+async function loadYear(y) {
+  S.tahun = String(y);
+  S.cfg = await S.db.get("tahun", S.tahun) || defaultCfg(S.tahun);
+  S.murid = {}; S.markah = {}; S.audit = {}; S.patch.clear();
+  for (const d of await S.db.list("murid", S.tahun + "_")) S.murid[d.id.slice(S.tahun.length + 1)] = d.data.senarai || [];
+  for (const d of await S.db.list("markah", S.tahun + "_")) { const key = d.id.slice(S.tahun.length + 1); S.markah[key] = d.data.data || {}; S.audit[key] = d.data.audit || {}; }
+  const sel = S.sel;
+  sel.ujian = S.cfg.ujian[0]?.id || null;
+  sel.kelas = S.cfg.kelas[0]?.id || null;
+  sel.darjah = darjahList()[0] || 6;
+  sel.slipKelas = sel.kelas; sel.muridKelas = sel.kelas;
+  sel.subjek = subjOf(sel.darjah)[0]?.kod || null;
+}
+
+/* ---------------- demo seed ---------------- */
+function prng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+async function seedDemo() {
+  const db = S.db; const y = String(new Date().getFullYear());
+  const cfg = defaultCfg(y);
+  cfg.sekolah.gb = "GURU BESAR (DEMO)";
+  cfg.ujian = [
+    { id: "U1", nama: "SUMATIF 1", kunci: true, terbit: true },
+    { id: "U2", nama: "SUMATIF 2", kunci: false, terbit: true },
+    { id: "U3", nama: "SUMATIF 3", kunci: false, terbit: false }
+  ];
+  const GK = ["NURUL AIN", "JENNY ANAK LAING", "FARID HAKIMI", "MEI LING", "AZLINA", "DAVID LAWAI", "ROSNAH", "STEPHANIE JOK", "HAFIZ", "LINDA ANAK BAKI", "ZAINAB", "KELVIN WONG", "SITI MARIAM", "JOHNNY ANAK NGAU", "FAZLINA", "RAMLAH", "ALEXANDER LIM", "NORHAYATI", "MAGDALENE ANAK USUN", "AZMAN", "SUHAILA", "PETER JAU", "ROHANA", "WINNIE TING", "KAMARUL", "SALMAH", "GRACE ANAK ENTERI", "ISMAWATI", "CHONG MEI FUNG", "RIDZUAN"];
+  cfg.kelas = stdKelas().map((k, i) => ({ ...k, guru: `CIKGU ${GK[i]} (DEMO)` }));
+  const first = ["AMIRUL", "NUR ALYA", "DANIEL", "SITI HAJAR", "AIDAN", "CHLOE", "HARIS", "MELISSA", "IRFAN", "ADRIANA", "LUQMAN", "KAYLA", "ZAFRAN", "VANESSA", "RAYYAN", "DAMIA", "JOEL", "AISYAH", "EVAN", "QISTINA"];
+  const last = [["BIN", "AHMAD"], ["BINTI", "RAZAK"], ["ANAK", "JUGAH"], ["BINTI", "SALLEH"], ["ANAK", "NYALAU"], ["", "TAN WEI LING"], ["BIN", "OTHMAN"], ["ANAK", "UNTING"], ["BIN", "HAMID"], ["BINTI", "ISMAIL"]];
+  const rnd = prng(42); const lvl = Object.fromEntries(cfg.kelas.map(k => [k.id, 80 - "abcde".indexOf(k.id.slice(-1)) * 10 + (k.darjah % 3) * 2]));
+  let n = 1; const murid = {}; const mk = { U1: {}, U2: {} };
+  for (const k of cfg.kelas) {
+    murid[k.id] = [];
+    for (let i = 0; i < 6; i++) {
+      const f = first[Math.floor(rnd() * first.length)], l = last[Math.floor(rnd() * last.length)];
+      const nama = l[0] ? `${f} ${l[0]} ${l[1]}` : `${l[1].split(" ")[0]} ${f} ${l[1].split(" ").slice(1).join(" ")}`.trim();
+      const islam = l[0] === "BIN" || l[0] === "BINTI";
+      const ic = String(20 - k.darjah).padStart(2, "0") + "05" + String(10 + (n % 18)).padStart(2, "0") + "13" + String(9000 + n).padStart(4, "0");
+      const m = { id: "m" + n, ic, nama, pin: k.id === "k6a" && i === 0 ? "DEMO26" : genPin(), agama: islam }; murid[k.id].push(m); n++;
+      const ab = lvl[k.id] + (rnd() - .5) * 30;
+      for (const u of ["U1", "U2"]) {
+        mk[u][k.id] = mk[u][k.id] || {};
+        const rec = { m: {}, ulasan: "", hadir: "" };
+        for (const s of cfg.subjek.filter(s => s.darjah.includes(k.darjah))) {
+          if (["PI", "PM"].includes(s.kod) && (s.kod === "PI") !== islam) continue;
+          if (s.kod === "BA" && !islam) continue; if (s.kod === "BC" && islam) continue;
+          if (u === "U2" && ((k.id === "k6c" && s.kod === "MT" && i < 3) || (k.id === "k5a" && s.kod === "SN") || (k.id === "k6b" && s.kod === "PMZ" && i > 3) || (k.id === "k2d" && s.kod === "BI") || (k.id === "k3e" && s.kod === "PSV" && i < 2))) continue;
+          if (rnd() < .012) { rec.m[s.kod] = "TH"; continue; }
+          const v = Math.round(Math.max(5, Math.min(100, ab + (u === "U2" ? 4 : 0) + (rnd() - .5) * 34)));
+          rec.m[s.kod] = v;
+        }
+        const r = kira(rec, cfg.subjek.filter(s => s.darjah.includes(k.darjah)), cfg);
+        rec.ulasan = r.gp < 1.8 ? cfg.ulasan[0] : r.gp < 2.6 ? cfg.ulasan[2] : r.gp < 3.4 ? cfg.ulasan[4] : cfg.ulasan[9];
+        rec.hadir = `${55 + Math.floor(rnd() * 6)}/60`;
+        mk[u][k.id][m.id] = rec;
+      }
+    }
+  }
+  const GS = { BM: "CIKGU AZLINA (DEMO)", BI: "CIKGU JENNY ANAK LAING (DEMO)", MT: "CIKGU FARID HAKIMI (DEMO)", SN: "CIKGU MEI LING (DEMO)", SEJ: "CIKGU NURUL AIN (DEMO)", PMZ: "CIKGU DAVID LAWAI (DEMO)" };
+  cfg.guruSubjek = {}; for (const k of cfg.kelas) { cfg.guruSubjek[k.id] = {}; for (const kod in GS) cfg.guruSubjek[k.id][kod] = GS[kod]; }
+  const au = {}; for (const u in mk) for (const k of cfg.kelas) { const a = au[u + "_" + k.id] = {}; const t = new Date(Date.now() - (u === "U1" ? 60 : 3) * 864e5 - Math.floor(rnd() * 864e5)).toISOString();
+    for (const s of cfg.subjek.filter(s => s.darjah.includes(k.darjah))) if (Object.values(mk[u][k.id]).some(r => r.m[s.kod] != null)) a[s.kod] = { nama: GS[s.kod] || k.guru, emel: "demo", masa: t };
+    a._ulasan = { nama: k.guru, emel: "demo", masa: t }; }
+  await db.set("app", "meta", { tahunAktif: y, tahunList: [y], demo: true, seedVer: 3 });
+  await db.set("tahun", y, cfg);
+  for (const k in murid) await db.set("murid", `${y}_${k}`, { senarai: murid[k] });
+  for (const u in mk) for (const k in mk[u]) await db.set("markah", `${y}_${u}_${k}`, { data: mk[u][k], audit: au[u + "_" + k] || {} });
+}
+
+/* ---------------- boot ---------------- */
+function fbConfig() { return FIREBASE_CONFIG || LS.get("emarkah-fbconfig"); }
+async function boot() {
+  const cfg = fbConfig();
+  if (cfg) {
+    try { S.fb = await loadFirebase(cfg); S.db = new FireDB(S.fb); S.mode = "firebase"; }
+    catch (e) { console.error(e); S.mode = "local"; S.db = new LocalDB(); S.fbErr = e.message; }
+  } else { S.mode = "local"; S.db = new LocalDB(); }
+  if (S.mode === "local") { const mt = await S.db.get("app", "meta"); if (!mt || (mt.demo && mt.seedVer !== 3)) { LS.keys().filter(k => k && k.startsWith("emarkah:")).forEach(k => LS.del(k)); await seedDemo(); } }
+  if (S.mode === "firebase") {
+    S.fb.onAuthStateChanged(S.fb.auth, async u => {
+      if (u && !S.user && u.email) { try { await staffAfterAuth(u.email); } catch (e) { renderLogin(e.message); } }
+      else if (!u && !S.user) renderLogin();
+    });
+  } else renderLogin();
+}
+async function staffAfterAuth(email) {
+  email = email.toLowerCase();
+  let st = await S.db.get("staff", email).catch(() => null);
+  if (!st && ADMIN_EMAILS.map(x => x.toLowerCase()).includes(email)) { st = { nama: "Pentadbir", peranan: "admin", emel: email }; }
+  if (!st) { await S.fb.signOut(S.fb.auth); throw new Error("Akaun ini belum didaftarkan oleh pentadbir dalam eMarkah."); }
+  S.user = { ...st, emel: email };
+  if (st.peranan === "admin") S.db.list("staff").then(l => S.staffNames = l.map(x => x.data.nama)).catch(() => { });
+  S.meta = await S.db.get("app", "meta") || { tahunAktif: String(new Date().getFullYear()), tahunList: [String(new Date().getFullYear())] };
+  if (!(await S.db.get("app", "meta")) && isAdmin()) await saveMeta();
+  await loadYear(S.meta.tahunAktif); render();
+}
+
+/* ---------------- login ---------------- */
+function renderLogin(err) {
+  S.user = null;
+  const demo = S.mode === "local";
+  const tab = S.loginTab || "guru";
+  const deco = ["A", "B", "A", "C", "A", "B", "B", "A", "D", "A", "C", "A", "A", "C", "B", "A", "A", "B"].map(g => `<span class="${g === "A" ? "a" : ""}">${g}</span>`).join("");
+  $("#app").innerHTML = `
+  <div class="login"><div class="login-card">
+    <div class="login-hero">
+      <div class="stack" style="gap:10px">
+        <div class="eyebrow" style="color:inherit;opacity:.8">SK Jalan Bintang · Miri</div>
+        <h1>eMarkah</h1>
+        <p style="margin:0;opacity:.88;max-width:34ch">Rekod markah ujian sepanjang tahun, analisis subjek, kelas dan darjah, serta semakan keputusan untuk ibu bapa.</p>
+      </div>
+      <div class="grid-deco" aria-hidden="true">${deco}</div>
+      <div class="small" style="opacity:.8">Gred A–F · GP · Kedudukan dalam kelas &amp; darjah</div>
+    </div>
+    <div class="login-body">
+      <div class="tabs" role="tablist">
+        <button class="${tab === "guru" ? "on" : ""}" data-tab="guru" role="tab">Guru &amp; Pentadbir</button>
+        <button class="${tab === "ibubapa" ? "on" : ""}" data-tab="ibubapa" role="tab">Ibu Bapa</button>
+      </div>
+      ${err ? `<div class="banner lock">${esc(err)}</div>` : ""}
+      ${S.fbErr ? `<div class="banner lock">Firebase gagal dimuatkan (${esc(S.fbErr)}). Aplikasi berjalan dalam mod demo.</div>` : ""}
+      ${tab === "guru" ? (demo ? `
+        <div class="demo-note"><b>Mod demo.</b> Data contoh (rekaan) disimpan dalam pelayar ini sahaja. Sambungkan Firebase di Tetapan untuk kegunaan sebenar oleh semua guru dan ibu bapa.</div>
+        <div class="stack" style="gap:10px">
+          <button class="btn pri" id="dAdmin">Masuk sebagai Pentadbir (demo)</button>
+          <button class="btn" id="dGuru">Masuk sebagai Guru (demo)</button>
+        </div>` : `
+        <form id="fStaff" class="stack" style="gap:12px">
+          <label class="f">Emel (DELIMa)<input class="inp" id="lgEmail" type="email" autocomplete="username" required></label>
+          <label class="f">Kata laluan<input class="inp" id="lgPw" type="password" autocomplete="current-password" required></label>
+          <button class="btn pri" type="submit">Log masuk</button>
+          <button class="btn sm" type="button" id="lgReset" style="justify-self:start">Lupa kata laluan</button>
+        </form>`) : `
+        <form id="fParent" class="stack" style="gap:12px">
+          <p class="muted small" style="margin:0">Masukkan No. MyKid / Kad Pengenalan anak dan PIN semakan yang diberi oleh sekolah.</p>
+          <label class="f">No. MyKid / KP murid<input class="inp" id="pIc" inputmode="numeric" placeholder="cth: 140510139001" required></label>
+          <label class="f">PIN semakan (6 aksara)<input class="inp" id="pPin" maxlength="6" style="text-transform:uppercase;letter-spacing:.2em" required></label>
+          <button class="btn pri" type="submit">Semak keputusan</button>
+          ${demo ? `<div class="demo-note">Cuba data contoh: No. KP <code id="demoIc">…</code> dan PIN <code>DEMO26</code></div>` : ""}
+        </form>`}
+    </div>
+  </div></div>`;
+  $$(".tabs button").forEach(b => b.onclick = () => { S.loginTab = b.dataset.tab; renderLogin(); });
+  if ($("#dAdmin")) {
+    $("#dAdmin").onclick = () => demoLogin("admin");
+    $("#dGuru").onclick = () => demoLogin("guru");
+  }
+  if ($("#fStaff")) {
+    $("#fStaff").onsubmit = async e => {
+      e.preventDefault();
+      try { await S.fb.signInWithEmailAndPassword(S.fb.auth, $("#lgEmail").value.trim(), $("#lgPw").value); }
+      catch (er) { renderLogin("Log masuk gagal: semak emel dan kata laluan."); }
+    };
+    $("#lgReset").onclick = async () => {
+      const em = $("#lgEmail").value.trim(); if (!em) return toast("Isi emel dahulu.");
+      try { await S.fb.sendPasswordResetEmail(S.fb.auth, em); toast("Pautan set semula dihantar ke emel."); } catch (e) { toast("Gagal: " + e.message); }
+    };
+  }
+  if ($("#fParent")) {
+    if ($("#demoIc")) S.db.get("murid", `${String(new Date().getFullYear())}_k6a`).then(d => { const m = d?.senarai?.[0]; if (m) $("#demoIc").textContent = m.ic; });
+    $("#fParent").onsubmit = async e => { e.preventDefault(); await parentLogin($("#pIc").value, $("#pPin").value); };
+  }
+}
+async function demoLogin(role) {
+  S.user = role === "admin" ? { nama: "Pentadbir (demo)", peranan: "admin", emel: "demo" } : { nama: "Guru (demo)", peranan: "guru", emel: "demo-guru" };
+  S.meta = await S.db.get("app", "meta"); await loadYear(S.meta.tahunAktif); render();
+}
+async function logout() {
+  if (S.mode === "firebase") await S.fb.signOut(S.fb.auth);
+  S.user = null; S.parent = { kids: [], cur: 0, ex: null }; renderLogin();
+}
+
+/* ---------------- shell ---------------- */
+const NAV = [
+  ["utama", "Utama", "◆"], ["isi", "Isi Markah", "✎"], ["analisis", "Analisis", "▤"], ["graf", "Graf Analisis", "▥"],
+  ["slip", "Slip Keputusan", "▭"], ["murid", "Murid & PIN", "☰"], ["semakan", "Semakan", "✓", true], ["tetapan", "Tetapan", "⚙", true]
+];
+function render() {
+  if (!S.user) return renderLogin();
+  const v = S.view;
+  $("#app").innerHTML = `
+  <header class="top">
+    <div class="brand">eMarkah<small>${esc(S.cfg.sekolah.nama)}</small></div>
+    <div class="grow"></div>
+    <label class="small">Tahun <select id="tYear" aria-label="Tahun">${S.meta.tahunList.map(y => `<option ${y === S.tahun ? "selected" : ""}>${y}</option>`).join("")}</select></label>
+    <span class="who">${esc(S.user.nama)} · ${isAdmin() ? "Pentadbir" : "Guru"}${S.mode === "local" ? " · DEMO" : ""}</span>
+    ${S.mode === "firebase" ? `<button class="btn sm" id="tRef" title="Muat semula data terkini daripada pangkalan data">Segar semula</button>` : ""}
+    <button class="btn sm" id="tOut">Log keluar</button>
+  </header>
+  <div class="shell">
+    <nav class="nav" aria-label="Menu">${NAV.filter(n => !n[3] || isAdmin()).map(n => `<button data-v="${n[0]}" class="${v === n[0] ? "on" : ""}"><span class="ico">${n[2]}</span>${n[1]}</button>`).join("")}</nav>
+    <main class="main" id="main"></main>
+  </div>`;
+  $("#tOut").onclick = async () => { if (await guardUnsaved()) logout(); };
+  $("#tRef") && ($("#tRef").onclick = async () => { if (!(await guardUnsaved())) return; const s = { ...S.sel }; await loadYear(S.tahun); Object.assign(S.sel, s); render(); toast("Data dikemas kini."); });
+  $("#tYear").onchange = async e => { if (!(await guardUnsaved())) { e.target.value = S.tahun; return; } await loadYear(e.target.value); render(); };
+  $$(".nav button").forEach(b => b.onclick = async () => { if (S.view === "isi" && b.dataset.v !== "isi" && !(await guardUnsaved())) return; if (b.dataset.v === "isi") { if (S.view === "isi" && !(await guardUnsaved())) return; S.sel.isiDarjah = null; } S.view = b.dataset.v; if (S.view === "isi" && S.sel.ujian && S.sel.kelas) await refreshMarkah(mkKey(S.sel.ujian, S.sel.kelas)); render(); window.scrollTo(0, 0); });
+  (VIEWS[v] || VIEWS.utama)($("#main"));
+}
+const opt = (list, cur, val = x => x.id, lab = x => x.nama) => list.map(x => `<option value="${esc(val(x))}" ${String(val(x)) === String(cur) ? "selected" : ""}>${esc(lab(x))}</option>`).join("");
+const ujianSel = id => `<label class="f">Ujian<select class="inp" id="${id}">${opt(S.cfg.ujian, S.sel.ujian)}</select></label>`;
+const darjahSel = id => `<label class="f">Darjah<select class="inp" id="${id}">${darjahList().map(d => `<option value="${d}" ${+d === +S.sel.darjah ? "selected" : ""}>Tahun ${d}</option>`).join("")}</select></label>`;
+const kelasSel = (id, cur) => `<label class="f">Kelas<select class="inp" id="${id}">${opt(S.cfg.kelas.slice().sort((a, b) => a.darjah - b.darjah || a.nama.localeCompare(b.nama)), cur)}</select></label>`;
+const gchip = g => g ? `<span class="g g-${esc(g)}">${esc(g)}</span>` : "";
+const GC = () => [...skalaSorted().map(s => s.g), "TH"];
+const gcol = g => `var(--g${g})`;
+function gbar(cnt, tot) { return `<div class="gbar" title="${GC().map(g => `${g}: ${cnt[g] || 0}`).join(", ")}">${GC().map(g => cnt[g] ? `<i style="width:${pc(cnt[g], tot)}%;background:${gcol(g)}"></i>` : "").join("")}</div>`; }
+function legend() { return `<div class="legend">${GC().map(g => `<span><i style="background:${gcol(g)}"></i>${g}</span>`).join("")}</div>`; }
+function emptyState(msg, act) { return `<div class="panel stack" style="justify-items:start"><h3>${msg}</h3>${act || ""}</div>`; }
+
+const VIEWS = {};
+
+/* ---------------- UTAMA ---------------- */
+VIEWS.utama = el => {
+  const c = S.cfg; const totalM = c.kelas.reduce((a, k) => a + muridOf(k.id).length, 0);
+  if (!c.kelas.length) { el.innerHTML = `<div class="head"><h2>Selamat datang</h2></div>` + emptyState("Belum ada kelas untuk tahun " + S.tahun + ".", isAdmin() ? `<p class="muted" style="margin:0">Mulakan dengan mengimport fail markah Excel (format TAHUN 6) atau tambah kelas di Tetapan.</p><div class="row"><button class="btn pri" id="goImp">Import Excel</button><button class="btn" id="goSet">Ke Tetapan</button></div>` : `<p class="muted">Pentadbir belum menyediakan kelas.</p>`);
+    $("#goImp") && ($("#goImp").onclick = () => importDialog()); $("#goSet") && ($("#goSet").onclick = () => { S.view = "tetapan"; render(); }); return; }
+  const prog = c.ujian.map(u => {
+    let need = 0, done = 0;
+    for (const k of c.kelas) { const core = subjOf(k.darjah).filter(s => !s.pilihan); for (const m of muridOf(k.id)) { const r = recOf(u.id, k.id, m.id)?.m || {}; need += core.length; done += core.filter(s => r[s.kod] != null && r[s.kod] !== "").length; } }
+    return { u, need, done };
+  });
+  const cur = c.ujian.find(u => u.id === S.sel.ujian) || c.ujian[0];
+  const dRows = darjahList().map(d => { const rows = hasilDarjah(cur.id, d); return { d, a: aggKeseluruhan(rows) }; });
+  el.innerHTML = `
+  <div class="head"><div><div class="eyebrow">Tahun ${S.tahun}</div><h2>Ringkasan sekolah</h2></div>
+    <div class="toolbar">${ujianSel("uU")}</div></div>
+  <div class="stats">
+    <div class="stat"><span class="eyebrow">Murid</span><b>${totalM}</b><span class="muted small">${c.kelas.length} kelas · ${darjahList().length} darjah</span></div>
+    <div class="stat"><span class="eyebrow">Ujian setahun</span><b>${c.ujian.length}</b><span class="muted small">${c.ujian.map(u => esc(u.nama)).join(" · ")}</span></div>
+    ${dRows.map(x => `<div class="stat"><span class="eyebrow">GPD Tahun ${x.d} · ${esc(cur.nama)}</span><b>${fmt(x.a.gp)}</b><span class="muted small">${x.a.lulus}/${x.a.hadir} murid lulus (${fmt(pc(x.a.lulus, x.a.hadir), 1)}%)</span></div>`).join("")}
+  </div>
+  <div class="panel"><h3>Kemajuan isian markah</h3>
+    <div class="stack" style="gap:12px">${prog.map(p => `<div class="row"><div style="width:170px"><b>${esc(p.u.nama)}</b> ${p.u.kunci ? `<span class="pill no">Dikunci</span>` : ""} ${p.u.terbit ? `<span class="pill ok">Diterbit</span>` : ""}</div>
+      <div class="grow"><div class="prog"><i style="width:${pc(p.done, p.need)}%"></i></div></div><div class="num small" style="width:120px;text-align:right">${p.done}/${p.need} (${fmt(pc(p.done, p.need), 0)}%)</div></div>`).join("")}
+    <p class="muted small" style="margin:0">Dikira untuk subjek teras sahaja. Subjek pilihan (PI/PM, BA/BC) dikosongkan bagi murid yang tidak mengambilnya.</p></div>
+  </div>
+  <div class="panel"><h3>Kemajuan mengikut kelas · ${esc(cur.nama)}</h3><div class="tw"><table class="t"><thead><tr><th class="l">Kelas</th><th class="l">Guru kelas</th><th>Murid</th><th>Lengkap</th><th>GPK</th><th>Taburan gred</th></tr></thead><tbody>
+    ${c.kelas.slice().sort((a, b) => a.darjah - b.darjah || a.nama.localeCompare(b.nama)).map(k => {
+      const core = subjOf(k.darjah).filter(s => !s.pilihan); const ms = muridOf(k.id); let need = ms.length * core.length, done = 0;
+      ms.forEach(m => { const r = recOf(cur.id, k.id, m.id)?.m || {}; done += core.filter(s => r[s.kod] != null && r[s.kod] !== "").length; });
+      const a = aggKeseluruhan(ms.map(m => ({ k: kira(recOf(cur.id, k.id, m.id), subjOf(k.darjah)) })));
+      return `<tr><td class="l"><b>${esc(k.nama)}</b></td><td class="l">${esc(k.guru || "–")}</td><td>${ms.length}</td><td>${fmt(pc(done, need), 0)}%</td><td><b>${fmt(a.gp)}</b></td><td style="min-width:180px">${gbar(a.g, a.ent + a.th)}</td></tr>`;
+    }).join("")}</tbody></table></div><div style="margin-top:8px">${legend()}</div></div>`;
+  $("#uU").onchange = e => { S.sel.ujian = e.target.value; render(); };
+};
+
+/* ---------------- ISI MARKAH ---------------- */
+function isiKiraan(uId, k, kod) {
+  /* filled vs. expected for one class (core subjects only, or one subject) */
+  const subj = subjOf(k.darjah).filter(s => kod ? s.kod === kod : !s.pilihan); let need = 0, done = 0;
+  for (const m of muridOf(k.id)) { const r = recOf(uId, k.id, m.id)?.m || {}; need += subj.length; done += subj.filter(s => r[s.kod] != null && r[s.kod] !== "").length; }
+  return { need, done };
+}
+function exTabs(id, kelas) {
+  return `<div class="extabs" id="${id}" role="tablist">${S.cfg.ujian.map(u => {
+    const p = kelas ? isiKiraan(u.id, kelas) : null;
+    return `<button role="tab" aria-selected="${u.id === S.sel.ujian}" class="${u.id === S.sel.ujian ? "on" : ""}" data-u="${u.id}">
+      <span class="ex-n">${esc(u.nama)}</span>
+      <span class="ex-m">${u.kunci ? "Dikunci" : "Dibuka"}${p ? ` · ${fmt(pc(p.done, p.need), 0)}% diisi` : ""}</span></button>`;
+  }).join("")}</div>`;
+}
+const guruSubjek = (kid, kod) => S.cfg.guruSubjek?.[kid]?.[kod] || "";
+function auditTxt(key, kod) {
+  const a = (S.audit[key] || {})[kod];
+  return a ? `Kemas kini terakhir oleh <b>${esc(a.nama)}</b> · ${esc(fmtMasa(a.masa))}` : `<span class="muted">Belum pernah disimpan</span>`;
+}
+function renderAuditOnly() {
+  $$("[data-audit]").forEach(el => { const [key, kod] = el.dataset.audit.split("|"); el.innerHTML = el.dataset.short ? auditShort(key, kod) : auditTxt(key, kod); });
+}
+function auditShort(key, kod) {
+  const a = (S.audit[key] || {})[kod]; if (!a) return `<span class="muted">–</span>`;
+  const n = a.nama.replace(/^(CIKGU|CIKGU\.|CG\.?|PN\.?|EN\.?|PUAN|ENCIK)\s+/i, "").split(" ").slice(0, 2).join(" ");
+  return `<span title="${esc(a.nama)} · ${esc(fmtMasa(a.masa))}">${esc(n)}<br><span class="muted">${esc(new Date(a.masa).toLocaleDateString("ms-MY", { day: "2-digit", month: "2-digit" }))}</span></span>`;
+}
+const pendekKelas = n => String(n).replace(/^\s*\d+\s*/, "") || n;
+function isiPicker(el) {
+  const c = S.cfg; const u = c.ujian.find(x => x.id === S.sel.ujian) || c.ujian[0]; S.sel.ujian = u.id;
+  el.innerHTML = `<div class="head"><div><div class="eyebrow">Isi markah · Tahun akademik ${S.tahun}</div><h2>Pilih darjah</h2></div></div>
+  ${exTabs("iTabs")}
+  <div class="dgrid">${ALL.map(d => {
+    const kls = kelasOfDarjah(d).slice().sort((a, b) => a.nama.localeCompare(b.nama)); const nm = kls.reduce((a, k) => a + muridOf(k.id).length, 0);
+    let need = 0, done = 0; kls.forEach(k => { const p = isiKiraan(u.id, k); need += p.need; done += p.done; });
+    return `<button class="dcard" data-d="${d}" ${kls.length ? "" : "disabled"}>
+      <div class="row" style="justify-content:space-between;align-items:baseline"><span class="dn">Tahun ${d}</span><span class="muted small">${kls.length} kelas · ${nm} murid</span></div>
+      <div class="dchips">${kls.map(k => `<span>${esc(pendekKelas(k.nama))}</span>`).join("") || `<em class="muted small">Tiada kelas</em>`}</div>
+      <div><div class="prog"><i style="width:${pc(done, need)}%"></i></div><div class="small muted" style="margin-top:4px">${esc(u.nama)}: ${fmt(pc(done, need), 0)}% markah diisi</div></div>
+    </button>`; }).join("")}</div>
+  ${S.patch.size ? `<div class="savebar dirty" id="saveBar"><span id="saveSt" class="save-st">${pendingCount()} perubahan belum disimpan.</span><span class="grow"></span><button class="btn pri" id="saveBtn">Simpan markah</button></div>` : ""}`;
+  $$("#iTabs button").forEach(b => b.onclick = () => { S.sel.ujian = b.dataset.u; render(); });
+  $$(".dcard").forEach(b => b.onclick = async () => {
+    const d = +b.dataset.d; S.sel.isiDarjah = d; const kls = kelasOfDarjah(d).slice().sort((a, b) => a.nama.localeCompare(b.nama));
+    if (!kls.find(k => k.id === S.sel.kelas)) S.sel.kelas = kls[0].id;
+    await refreshMarkah(mkKey(S.sel.ujian, S.sel.kelas)); render(); window.scrollTo(0, 0);
+  });
+  $("#saveBtn") && ($("#saveBtn").onclick = async () => { if (await flushNow()) { toast("Markah telah disimpan."); render(); } });
+}
+VIEWS.isi = el => {
+  const c = S.cfg; if (!c.kelas.length) { el.innerHTML = emptyState("Belum ada kelas."); return; }
+  if (!S.sel.isiDarjah || !kelasOfDarjah(S.sel.isiDarjah).length) { S.sel.isiDarjah = null; return isiPicker(el); }
+  const kls = kelasOfDarjah(S.sel.isiDarjah).slice().sort((a, b) => a.nama.localeCompare(b.nama));
+  if (!kls.find(x => x.id === S.sel.kelas)) S.sel.kelas = kls[0].id;
+  const k = kelasById(S.sel.kelas); const subj = subjOf(k.darjah);
+  if (!subj.find(s => s.kod === S.sel.subjek)) S.sel.subjek = subj[0]?.kod;
+  const u = c.ujian.find(x => x.id === S.sel.ujian) || c.ujian[0]; S.sel.ujian = u.id;
+  const locked = u.kunci && !isAdmin(); const key = mkKey(u.id, k.id);
+  S.markah[key] = S.markah[key] || {};
+  const ms = muridOf(k.id); const mod = S.sel.isiMod;
+  const s = subj.find(x => x.kod === S.sel.subjek);
+  const head = `
+  <div class="head"><div class="crumb"><button class="btn sm" id="iBack">← Pilih darjah</button><div><div class="eyebrow">Isi markah · Tahun ${S.sel.isiDarjah}</div><h2>${esc(k.nama)}</h2></div></div></div>
+  ${exTabs("iTabs", k)}
+  <div class="ktabs" id="iKt" role="tablist" aria-label="Kelas">${kls.map(x => { const p = isiKiraan(u.id, x); return `<button role="tab" aria-selected="${x.id === k.id}" class="${x.id === k.id ? "on" : ""}" data-k="${x.id}"><span class="kn">${esc(pendekKelas(x.nama))}</span><span class="km">${muridOf(x.id).length} murid · ${fmt(pc(p.done, p.need), 0)}% diisi</span></button>`; }).join("")}</div>
+  <div class="toolbar">
+    <div class="f" style="display:grid;gap:4px"><span class="small muted" style="font-weight:600">Paparan</span><div class="seg" id="iMod">
+      <button data-m="subjek" class="${mod === "subjek" ? "on" : ""}">Satu subjek</button><button data-m="semua" class="${mod === "semua" ? "on" : ""}">Semua subjek</button><button data-m="ulasan" class="${mod === "ulasan" ? "on" : ""}">Ulasan &amp; kehadiran</button></div></div>
+    ${mod === "subjek" ? `<label class="f">Subjek<select class="inp" id="iS">${opt(subj, S.sel.subjek, s => s.kod, s => `${s.kod} – ${s.nama}`)}</select></label>` : ""}
+    ${topLevel ? `<button class="btn" id="iExp">Muat turun Excel</button>` : ""}
+  </div>
+  ${u.kunci ? `<div class="banner lock">${esc(u.nama)} telah dikunci oleh pentadbir. ${isAdmin() ? "Anda masih boleh mengubah kerana anda pentadbir." : "Markah hanya boleh dilihat."}</div>` : ""}
+  ${mod === "subjek" && s ? `<div class="auditbar"><div><span class="eyebrow">${esc(s.nama)} · ${esc(u.nama)}</span><div data-audit="${key}|${s.kod}">${auditTxt(key, s.kod)}</div></div><div class="small">Guru subjek: <b>${esc(guruSubjek(k.id, s.kod) || "belum ditetapkan")}</b></div></div>` : ""}
+  ${mod === "ulasan" ? `<div class="auditbar"><div><span class="eyebrow">Ulasan &amp; kehadiran · ${esc(u.nama)}</span><div data-audit="${key}|_ulasan">${auditTxt(key, "_ulasan")}</div></div><div class="small">Guru kelas: <b>${esc(k.guru || "–")}</b></div></div>` : ""}
+  <div class="muted small">Taip markah 0–100, atau <b>TH</b> untuk tidak hadir. Kosongkan jika murid tidak mengambil subjek itu. Enter turun ke murid seterusnya. Tekan <b>Simpan markah</b> (atau Ctrl+S) selepas selesai.</div>`;
+  const saveBar = `<div class="savebar" id="saveBar"><span id="saveSt" class="save-st">Tiada perubahan.</span><span class="grow"></span><button class="btn pri" id="saveBtn" disabled>Simpan markah</button></div>`;
+  if (!ms.length) { el.innerHTML = head + emptyState("Tiada murid dalam kelas ini.", isAdmin() ? `<button class="btn pri" id="goM">Tambah murid</button>` : ""); bindIsi(); $("#goM") && ($("#goM").onclick = () => { S.view = "murid"; S.sel.muridKelas = k.id; render(); }); return; }
+  let body = "";
+  if (mod === "subjek") {
+    body = `<div class="tw"><table class="t"><thead><tr><th>No</th><th class="l">Nama murid</th><th>Markah ${esc(s.kod)}</th><th>Gred</th><th class="l">Taksiran</th></tr></thead><tbody>
+    ${ms.map((m, i) => { const v = S.markah[key][m.id]?.m?.[s.kod]; const g = gradeOf(v); return `<tr><td>${i + 1}</td><td class="l name">${esc(m.nama)}</td><td><input class="mk" data-m="${m.id}" data-s="${s.kod}" value="${v ?? ""}" ${locked ? "disabled" : ""} inputmode="text" aria-label="Markah ${esc(m.nama)}"></td><td class="gc">${gchip(g)}</td><td class="l small muted tk">${esc(labelOf(g))}</td></tr>`; }).join("")}
+    </tbody></table></div>
+    <div class="panel" id="iSum"></div>`;
+  } else if (mod === "semua") {
+    body = `<div class="tw" style="max-height:68vh"><table class="t"><thead><tr><th class="sticky l">Nama murid</th>${subj.map(s => `<th title="${esc(s.nama)}">${esc(s.kod)}</th>`).join("")}<th>Jumlah</th><th>Purata</th><th>GP</th><th>Keputusan</th></tr></thead><tbody>
+    ${ms.map((m, i) => { const r = S.markah[key][m.id]; return `<tr data-row="${m.id}"><td class="l name sticky"><span class="muted">${i + 1}.</span> ${esc(m.nama)}</td>${subj.map(s => { const v = r?.m?.[s.kod]; return `<td><input class="mk" data-m="${m.id}" data-s="${s.kod}" value="${v ?? ""}" ${locked ? "disabled" : ""} aria-label="${esc(s.kod)} ${esc(m.nama)}" style="width:48px"></td>`; }).join("")}<td class="rj num"></td><td class="rp num"></td><td class="rg num"></td><td class="rk"></td></tr>`; }).join("")}
+    </tbody><tfoot><tr class="audit-row"><td class="l sticky small"><b>Kemas kini terakhir</b></td>${subj.map(s => `<td class="small" data-audit="${key}|${s.kod}" data-short="1">${auditShort(key, s.kod)}</td>`).join("")}<td colspan="4"></td></tr></tfoot></table></div>`;
+  } else {
+    body = `<datalist id="ulList">${c.ulasan.map(x => `<option value="${esc(x)}">`).join("")}</datalist>
+    <div class="tw"><table class="t"><thead><tr><th>No</th><th class="l">Nama murid</th><th>GP</th><th>Kehadiran</th><th class="l">Ulasan guru kelas</th></tr></thead><tbody>
+    ${ms.map((m, i) => { const r = S.markah[key][m.id] || {}; const kk = kira(r, subj); return `<tr><td>${i + 1}</td><td class="l name">${esc(m.nama)}</td><td class="num">${fmt(kk.gp)}</td><td><input class="inp" data-h="${m.id}" value="${esc(r.hadir || "")}" placeholder="cth 58/60" style="width:96px" ${locked ? "disabled" : ""}></td><td class="l" style="min-width:340px"><div class="row" style="flex-wrap:nowrap"><input class="inp grow" list="ulList" data-u="${m.id}" value="${esc(r.ulasan || "")}" ${locked ? "disabled" : ""}><button class="btn sm" data-auto="${m.id}" ${locked ? "disabled" : ""} title="Cadang ulasan ikut GP">Auto</button></div></td></tr>`; }).join("")}
+    </tbody></table></div>`;
+  }
+  el.innerHTML = head + body + saveBar;
+  bindIsi(); updSaveBtn();
+  if (S.patch.size) setSaveSt(`${pendingCount()} perubahan belum disimpan. Tekan Simpan markah.`);
+  const inputs = $$(".mk", el);
+  const ensure = mid => (S.markah[key][mid] = S.markah[key][mid] || { m: {} }, S.markah[key][mid].m = S.markah[key][mid].m || {}, S.markah[key][mid]);
+  const refreshRow = mid => {
+    if (mod !== "semua") return; const tr = $(`tr[data-row="${mid}"]`, el); const kk = kira(S.markah[key][mid], subj);
+    $(".rj", tr).textContent = kk.hadir ? kk.jumlah : "–"; $(".rp", tr).textContent = fmt(kk.purata); $(".rg", tr).textContent = fmt(kk.gp);
+    $(".rk", tr).innerHTML = kk.keputusan ? kepPill(kk.keputusan) : "";
+  };
+  const sumSubj = () => {
+    const box = $("#iSum"); if (!box) return; const s = S.sel.subjek;
+    const a = aggSubjek(ms.map(m => ({ k: kira(S.markah[key][m.id], subj) })), s);
+    box.innerHTML = `<div class="row" style="justify-content:space-between"><h3>Ringkasan ${esc(s)} · ${esc(k.nama)}</h3><span class="muted small">${a.daftar}/${ms.length} diisi</span></div>
+      <div class="row" style="margin-top:8px">${GC().map(g => `<span class="row" style="gap:4px">${gchip(g)}<b class="num">${a.g[g] || 0}</b></span>`).join("")}<span class="grow"></span><span>GPMP <b>${fmt(a.gp)}</b></span><span>Lulus <b>${fmt(pc(a.lulus, a.hadir), 1)}%</b></span></div>
+      <div style="margin-top:10px">${gbar(a.g, a.daftar)}</div>`;
+  };
+  inputs.forEach(inp => {
+    const mid = inp.dataset.m, s = inp.dataset.s;
+    if (mod === "semua") refreshRow(mid);
+    inp.addEventListener("input", () => {
+      const p = parseMark(inp.value); inp.classList.toggle("bad", !p.ok); if (!p.ok) return;
+      const r = ensure(mid); if (p.v == null) delete r.m[s]; else r.m[s] = p.v;
+      inp.classList.add("chg");
+      if (mod === "subjek") { const tr = inp.closest("tr"); const g = gradeOf(p.v); $(".gc", tr).innerHTML = gchip(g); $(".tk", tr).textContent = labelOf(g); sumSubj(); }
+      refreshRow(mid); markDirty(key, mid, ["m", s], p.v);
+    });
+    inp.addEventListener("blur", () => { const p = parseMark(inp.value); if (p.ok && p.v === "TH") inp.value = "TH"; });
+    inp.addEventListener("keydown", e => {
+      if (!["Enter", "ArrowDown", "ArrowUp"].includes(e.key)) return; e.preventDefault();
+      const same = inputs.filter(x => x.dataset.s === s); const i = same.indexOf(inp);
+      const nx = same[i + (e.key === "ArrowUp" ? -1 : 1)]; if (nx) { nx.focus(); nx.select(); }
+    });
+    inp.addEventListener("focus", () => inp.select());
+  });
+  sumSubj();
+  $$("[data-h]", el).forEach(i => i.oninput = () => { ensure(i.dataset.h).hadir = i.value.trim(); i.classList.add("chg"); markDirty(key, i.dataset.h, ["hadir"], i.value.trim()); });
+  $$("[data-u]", el).forEach(i => i.oninput = () => { ensure(i.dataset.u).ulasan = i.value; i.classList.add("chg"); markDirty(key, i.dataset.u, ["ulasan"], i.value); });
+  $$("[data-auto]", el).forEach(b => b.onclick = () => {
+    const mid = b.dataset.auto; const kk = kira(S.markah[key][mid], subj); if (kk.gp == null) return toast("Tiada markah untuk dicadang.");
+    const L = c.ulasan; const idx = Math.min(L.length - 1, Math.max(0, Math.floor((kk.gp - 1) / 5 * L.length)));
+    ensure(mid).ulasan = L[idx]; const inp = $(`[data-u="${mid}"]`, el); inp.value = L[idx]; inp.classList.add("chg"); markDirty(key, mid, ["ulasan"], L[idx]);
+  });
+};
+function bindIsi() {
+  $$("#iTabs button").forEach(b => b.onclick = async () => { S.sel.ujian = b.dataset.u; await refreshMarkah(mkKey(S.sel.ujian, S.sel.kelas)); render(); });
+  $$("#iKt button").forEach(b => b.onclick = async () => { S.sel.kelas = b.dataset.k; await refreshMarkah(mkKey(S.sel.ujian, S.sel.kelas)); render(); });
+  $("#iBack") && ($("#iBack").onclick = () => { S.sel.isiDarjah = null; render(); window.scrollTo(0, 0); });
+  $("#iS") && ($("#iS").onchange = e => { S.sel.subjek = e.target.value; render(); });
+  $$("#iMod button").forEach(b => b.onclick = () => { S.sel.isiMod = b.dataset.m; render(); });
+  $("#iExp") && ($("#iExp").onclick = () => exportKelas(S.sel.ujian, S.sel.kelas));
+  $("#saveBtn") && ($("#saveBtn").onclick = async () => { if (await flushNow()) { $$(".chg").forEach(x => x.classList.remove("chg")); toast("Markah telah disimpan."); } });
+}
+document.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s" && S.view === "isi" && S.user) { e.preventDefault(); $("#saveBtn")?.click(); } });
+
+/* ---------------- ANALISIS ---------------- */
+const AN_TABS = [["kelasD", "Keseluruhan darjah"], ["subjekD", "Subjek darjah"], ["kelas", "Analisis kelas"], ["subjek", "Subjek ikut kelas"], ["pelajar", "Kedudukan murid"], ["banding", "Banding ujian"]];
+function gradeHeads(extra = "") { return GC().map(g => `<th>${g}</th><th class="pct">%</th>`).join("") + extra; }
+function gradeCells(cnt, tot) { return GC().map(g => `<td>${cnt[g] || 0}</td><td class="pct">${fmt(pc(cnt[g] || 0, tot), 1)}</td>`).join(""); }
+VIEWS.analisis = el => {
+  const c = S.cfg; if (!c.kelas.length) { el.innerHTML = emptyState("Belum ada data untuk dianalisis."); return; }
+  if (!darjahList().includes(+S.sel.darjah)) S.sel.darjah = darjahList()[0];
+  const d = +S.sel.darjah; const u = c.ujian.find(x => x.id === S.sel.ujian) || c.ujian[0]; S.sel.ujian = u.id;
+  const subj = subjOf(d); if (!subj.find(s => s.kod === S.sel.subjek)) S.sel.subjek = subj[0]?.kod;
+  const kls = kelasOfDarjah(d); if (!kls.find(k => k.id === S.sel.kelas)) S.sel.kelas = kls[0]?.id;
+  const rows = hasilDarjah(u.id, d); const tab = S.sel.an;
+  let html = `<div class="head"><div><div class="eyebrow">Analisis · Tahun ${d} · ${esc(u.nama)}</div><h2>${AN_TABS.find(t => t[0] === tab)[1]}</h2></div>${topLevel ? `<button class="btn noprint" id="aPrint">Cetak</button>` : ""}</div>
+  <div class="toolbar noprint">${tab !== "banding" ? ujianSel("aU") : ""}${darjahSel("aD")}
+    ${tab === "kelas" ? `<label class="f">Kelas<select class="inp" id="aK">${opt(kls, S.sel.kelas)}</select></label>` : ""}
+    ${tab === "subjek" ? `<label class="f">Subjek<select class="inp" id="aS">${opt(subj, S.sel.subjek, s => s.kod, s => s.nama)}</select></label>` : ""}
+  </div>
+  <div class="seg noprint" id="aTabs" style="flex-wrap:wrap">${AN_TABS.map(t => `<button data-t="${t[0]}" class="${tab === t[0] ? "on" : ""}">${t[1]}</button>`).join("")}</div>`;
+
+  if (tab === "kelasD") {
+    const per = kls.map(k => ({ k, a: aggKeseluruhan(rows.filter(r => r.kelas.id === k.id)) })); const all = aggKeseluruhan(rows);
+    const line = (name, a, cls = "") => `<tr class="${cls}"><td class="l"><b>${esc(name)}</b></td>${gradeCells(a.g, a.ent + a.th)}<td><b>${fmt(a.gp)}</b></td><td>${a.lulus}</td><td class="pct">${fmt(pc(a.lulus, a.hadir), 1)}</td><td>${a.gagal}</td><td class="pct">${fmt(pc(a.gagal, a.hadir), 1)}</td><td>${a.bil}</td><td>${a.hadir}</td><td>${a.bil - a.hadir}</td><td style="min-width:150px">${gbar(a.g, a.ent + a.th)}</td></tr>`;
+    html += `<div class="panel"><h3>Pencapaian keseluruhan murid mengikut kelas</h3><div class="tw"><table class="t"><thead><tr><th class="l">Kelas</th>${gradeHeads()}<th>GPK</th><th>Lulus</th><th class="pct">%</th><th>Gagal</th><th class="pct">%</th><th>Daftar</th><th>Hadir</th><th>TH</th><th>Taburan</th></tr></thead><tbody>
+      ${per.map(x => line(x.k.nama, x.a)).join("")}${line("JUMLAH (GPD)", all, "sum")}</tbody></table></div>
+      <p class="muted small" style="margin:8px 0 0">Bilangan gred dikira bagi semua subjek yang diambil. GPK/GPD = purata nilai gred (A=1 … F=6). Murid lulus = tiada gred ${esc(skalaSorted().filter(s => !s.lulus).map(s => s.g).join("/"))}.</p></div>`;
+  }
+  if (tab === "subjekD" || tab === "kelas") {
+    const base = tab === "kelas" ? rows.filter(r => r.kelas.id === S.sel.kelas) : rows;
+    const a = aggKeseluruhan(base);
+    html += `<div class="panel"><h3>${tab === "kelas" ? "Analisis kelas " + esc(kelasById(S.sel.kelas)?.nama || "") : "Pencapaian mengikut subjek · Tahun " + d}</h3><div class="tw"><table class="t"><thead><tr><th class="l">Subjek</th>${gradeHeads()}<th>GPMP</th><th>Lulus</th><th class="pct">%</th><th>Gagal</th><th class="pct">%</th><th>Daftar</th><th>Hadir</th><th>Taburan</th></tr></thead><tbody>
+      ${subj.map(s => { const x = aggSubjek(base, s.kod); if (!x.daftar) return ""; return `<tr><td class="l" title="${esc(s.nama)}"><b>${esc(s.kod)}</b> <span class="muted small">${esc(s.nama)}</span></td>${gradeCells(x.g, x.daftar)}<td><b>${fmt(x.gp)}</b></td><td>${x.lulus}</td><td class="pct">${fmt(pc(x.lulus, x.hadir), 1)}</td><td>${x.gagal}</td><td class="pct">${fmt(pc(x.gagal, x.hadir), 1)}</td><td>${x.daftar}</td><td>${x.hadir}</td><td style="min-width:150px">${gbar(x.g, x.daftar)}</td></tr>`; }).join("")}
+      <tr class="sum"><td class="l">KESELURUHAN (${tab === "kelas" ? "GPK" : "GPD"})</td>${gradeCells(a.g, a.ent + a.th)}<td>${fmt(a.gp)}</td><td colspan="2">Murid lulus ${a.lulus}</td><td colspan="2">${fmt(pc(a.lulus, a.hadir), 1)}%</td><td>${a.bil}</td><td>${a.hadir}</td><td></td></tr>
+      </tbody></table></div><div style="margin-top:8px">${legend()}</div></div>`;
+  }
+  if (tab === "subjek") {
+    const s = subj.find(x => x.kod === S.sel.subjek); const all = aggSubjek(rows, s.kod);
+    html += `<div class="panel"><h3>${esc(s.nama)} · mengikut kelas</h3><div class="tw"><table class="t"><thead><tr><th class="l">Kelas</th>${gradeHeads()}<th>GPMP</th><th>Lulus</th><th class="pct">%</th><th>Gagal</th><th class="pct">%</th><th>Daftar</th><th>Ambil</th><th>Taburan</th></tr></thead><tbody>
+      ${kls.map(k => { const x = aggSubjek(rows.filter(r => r.kelas.id === k.id), s.kod); return `<tr><td class="l"><b>${esc(k.nama)}</b></td>${gradeCells(x.g, x.daftar)}<td><b>${fmt(x.gp)}</b></td><td>${x.lulus}</td><td class="pct">${fmt(pc(x.lulus, x.hadir), 1)}</td><td>${x.gagal}</td><td class="pct">${fmt(pc(x.gagal, x.hadir), 1)}</td><td>${x.daftar}</td><td>${x.hadir}</td><td style="min-width:150px">${gbar(x.g, x.daftar)}</td></tr>`; }).join("")}
+      <tr class="sum"><td class="l">JUMLAH</td>${gradeCells(all.g, all.daftar)}<td>${fmt(all.gp)}</td><td>${all.lulus}</td><td class="pct">${fmt(pc(all.lulus, all.hadir), 1)}</td><td>${all.gagal}</td><td class="pct">${fmt(pc(all.gagal, all.hadir), 1)}</td><td>${all.daftar}</td><td>${all.hadir}</td><td></td></tr></tbody></table></div></div>
+      <div class="panel"><h3>Senarai murid · ${esc(s.kod)} (markah tertinggi dahulu)</h3><div class="tw" style="max-height:60vh"><table class="t"><thead><tr><th>No</th><th class="l">Nama</th><th class="l">Kelas</th><th>Markah</th><th>Gred</th></tr></thead><tbody>
+      ${rows.map(r => ({ r, it: r.k.rows.find(x => x.kod === s.kod) })).filter(x => x.it).sort((a, b) => (b.it.v === "TH" ? -1 : b.it.v) - (a.it.v === "TH" ? -1 : a.it.v)).map((x, i) => `<tr><td>${i + 1}</td><td class="l name">${esc(x.r.m.nama)}</td><td class="l">${esc(x.r.kelas.nama)}</td><td class="num">${x.it.v}</td><td>${gchip(x.it.g)}</td></tr>`).join("")}
+      </tbody></table></div></div>`;
+  }
+  if (tab === "pelajar") {
+    const sorted = rows.slice().sort((a, b) => (a.kdt || 1e9) - (b.kdt || 1e9) || a.m.nama.localeCompare(b.m.nama));
+    html += `<div class="panel"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3>Kedudukan murid Tahun ${d}</h3><input class="inp noprint" id="aQ" placeholder="Cari nama atau kelas" style="width:240px"></div><div class="tw" style="max-height:72vh"><table class="t" id="aTbl"><thead><tr><th>KDT</th><th class="l">Nama murid</th><th class="l">Kelas</th><th>Jumlah</th><th>Purata %</th><th>GP</th><th>Keputusan</th><th>KDK</th><th class="l">Analisis</th></tr></thead><tbody>
+      ${sorted.map(r => `<tr data-q="${esc((r.m.nama + " " + r.kelas.nama).toLowerCase())}"><td class="num"><b>${r.kdt ? r.kdt + "/" + r.kdtN : "–"}</b></td><td class="l name">${esc(r.m.nama)}</td><td class="l">${esc(r.kelas.nama)}</td><td class="num">${r.k.hadir ? r.k.jumlah : "–"}</td><td class="num">${fmt(r.k.purata)}</td><td class="num"><b>${fmt(r.k.gp)}</b></td><td>${kepPill(r.k.keputusan)}</td><td class="num">${r.kdk ? r.kdk + "/" + r.kdkN : "–"}</td><td class="l small">${esc(r.k.analisis)}</td></tr>`).join("")}
+      </tbody></table></div><p class="muted small" style="margin:8px 0 0">Kedudukan disusun mengikut GP terendah, kemudian jumlah markah tertinggi.</p></div>`;
+  }
+  if (tab === "banding") {
+    const per = c.ujian.map(x => ({ u: x, rows: hasilDarjah(x.id, d) }));
+    const cell = (v, prev) => { if (v == null) return `<td class="muted">–</td>`; let ar = ""; if (prev != null) { const dd = v - prev; ar = Math.abs(dd) < .005 ? "" : dd < 0 ? ` <span class="up" title="GP turun = lebih baik">▲${fmt(-dd)}</span>` : ` <span class="down">▼${fmt(dd)}</span>`; } return `<td class="num"><b>${fmt(v)}</b>${ar}</td>`; };
+    html += `<div class="panel"><h3>GPMP setiap subjek merentas ujian · Tahun ${d}</h3><p class="muted small" style="margin:-4px 0 10px">GP lebih rendah bermaksud pencapaian lebih baik. ▲ hijau = meningkat berbanding ujian sebelumnya.</p><div class="tw"><table class="t"><thead><tr><th class="l">Subjek</th>${per.map(p => `<th>${esc(p.u.nama)}</th>`).join("")}</tr></thead><tbody>
+      ${subj.map(s => { let prev = null; return `<tr><td class="l"><b>${esc(s.kod)}</b> <span class="muted small">${esc(s.nama)}</span></td>${per.map(p => { const v = aggSubjek(p.rows, s.kod).gp; const h = cell(v, prev); if (v != null) prev = v; return h; }).join("")}</tr>`; }).join("")}
+      <tr class="sum"><td class="l">GPD Tahun ${d}</td>${(() => { let prev = null; return per.map(p => { const v = aggKeseluruhan(p.rows).gp; const h = cell(v, prev); if (v != null) prev = v; return h; }).join(""); })()}</tr>
+      ${kls.map(k => { let prev = null; return `<tr><td class="l">GPK ${esc(k.nama)}</td>${per.map(p => { const v = aggKeseluruhan(p.rows.filter(r => r.kelas.id === k.id)).gp; const h = cell(v, prev); if (v != null) prev = v; return h; }).join("")}</tr>`; }).join("")}
+      </tbody></table></div></div>`;
+  }
+  el.innerHTML = html;
+  $("#aU") && ($("#aU").onchange = e => { S.sel.ujian = e.target.value; render(); });
+  $("#aD").onchange = e => { S.sel.darjah = +e.target.value; render(); };
+  $("#aK") && ($("#aK").onchange = e => { S.sel.kelas = e.target.value; render(); });
+  $("#aS") && ($("#aS").onchange = e => { S.sel.subjek = e.target.value; render(); });
+  $$("#aTabs button").forEach(b => b.onclick = () => { S.sel.an = b.dataset.t; render(); });
+  $("#aPrint") && ($("#aPrint").onclick = () => window.print());
+  $("#aQ") && ($("#aQ").oninput = e => { const q = e.target.value.toLowerCase(); $$("#aTbl tbody tr").forEach(tr => tr.hidden = !tr.dataset.q.includes(q)); });
+};
+
+/* ---------------- SVG CHARTS (no library; colours from theme tokens) ---------------- */
+const SER = ["var(--c1)", "var(--c2)", "var(--c3)", "var(--c4)", "var(--c5)", "var(--c6)", "var(--c7)", "var(--c8)"];
+const gpCol = v => v == null ? "var(--gTH)" : v <= 2 ? "var(--gA)" : v <= 3 ? "var(--gB)" : v <= 4 ? "var(--gC)" : v <= 5 ? "var(--gD)" : "var(--gF)";
+function niceMax(v) { if (!(v > 0)) return 4; const raw = v / 4, p = Math.pow(10, Math.floor(Math.log10(raw))); return [1, 2, 2.5, 5, 10].map(x => x * p).find(x => x >= raw) * 4; }
+function svgBar({ labels, values, max, fmtv = v => fmt(v), colors, h = 250, yfmt = v => Number.isInteger(+v.toFixed(6)) ? String(Math.round(v)) : fmt(v, 1), titles }) {
+  const W = 640, n = labels.length, rot = n > 7, L = 38, R = 8, T = 18, B = rot ? 64 : 34, H = h;
+  const vals = values.map(v => v == null ? null : +v); const mx = max ?? niceMax(Math.max(0, ...vals.filter(v => v != null)) * 1.12);
+  const ih = H - T - B, iw = (W - L - R) / Math.max(1, n), y = v => T + ih - (v / mx) * ih;
+  let g = "";
+  for (let i = 0; i <= 4; i++) { const v = mx * i / 4; g += `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${yfmt(v)}</text>`; }
+  vals.forEach((v, i) => {
+    const w = Math.min(iw * .64, 70), cx = L + i * iw + iw / 2, x = cx - w / 2;
+    if (v != null) g += `<rect x="${x}" y="${y(v)}" width="${w}" height="${Math.max(0, T + ih - y(v))}" rx="3" style="fill:${colors ? colors[i] : "var(--em)"}"><title>${esc((titles || labels)[i])}: ${esc(fmtv(v))}</title></rect><text class="val" x="${cx}" y="${y(v) - 5}" text-anchor="middle">${esc(fmtv(v))}</text>`;
+    g += rot ? `<text x="${cx}" y="${T + ih + 12}" text-anchor="end" transform="rotate(-38 ${cx} ${T + ih + 12})">${esc(labels[i])}</text>` : `<text x="${cx}" y="${T + ih + 18}" text-anchor="middle">${esc(labels[i])}</text>`;
+  });
+  return `<svg class="ch" viewBox="0 0 ${W} ${H}" role="img">${g}<line class="axis" x1="${L}" x2="${W - R}" y1="${T + ih}" y2="${T + ih}"/></svg>`;
+}
+function svgStack(rows) {
+  /* rows: [{label, cnt:{A:..}, tot, bold}] → 100% stacked horizontal bars */
+  const W = 640, L = 112, R = 18, rh = 30, H = rows.length * rh + 26, iw = W - L - R; let g = "";
+  [0, 25, 50, 75, 100].forEach(p => { const x = L + iw * p / 100; g += `<line class="grid" x1="${x}" x2="${x}" y1="4" y2="${H - 20}"/><text x="${x}" y="${H - 6}" text-anchor="middle">${p}%</text>`; });
+  rows.forEach((r, i) => {
+    const y = 6 + i * rh; let x = L;
+    g += `<text x="${L - 8}" y="${y + 15}" text-anchor="end" class="${r.bold ? "val" : ""}">${esc(r.label)}</text>`;
+    for (const gr of GC()) { const v = r.cnt[gr] || 0; if (!v || !r.tot) continue; const w = iw * v / r.tot;
+      g += `<rect x="${x}" y="${y}" width="${w}" height="${rh - 8}" style="fill:${gcol(gr)}"><title>${esc(r.label)} · ${gr}: ${v} (${fmt(pc(v, r.tot), 1)}%)</title></rect>`;
+      if (w > 30) g += `<text class="in" x="${x + w / 2}" y="${y + 15}" text-anchor="middle">${fmt(pc(v, r.tot), 0)}%</text>`; x += w; }
+  });
+  return `<svg class="ch" viewBox="0 0 ${W} ${H}" role="img">${g}</svg>`;
+}
+function svgLine({ labels, series, min = 1, max = 6, invert = true, h = 260 }) {
+  const W = 640, L = 38, R = 120, T = 16, B = 34, H = h, ih = H - T - B, n = labels.length;
+  const x = i => n === 1 ? L + (W - L - R) / 2 : L + i * (W - L - R) / (n - 1);
+  const y = v => invert ? T + (v - min) / (max - min) * ih : T + ih - (v - min) / (max - min) * ih;
+  let g = "";
+  const st = (max - min) > 2.5 ? 1 : .5;
+  for (let v = min; v <= max + 1e-9; v += st) g += `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${fmt(v, 1)}</text>`;
+  labels.forEach((l, i) => g += `<text x="${x(i)}" y="${H - 10}" text-anchor="middle">${esc(l)}</text>`);
+  const ends = [];
+  series.forEach((s, si) => {
+    const pts = s.values.map((v, i) => v == null ? null : [x(i), y(v), v]).filter(Boolean); if (!pts.length) return;
+    g += `<polyline points="${pts.map(p => p[0] + "," + p[1]).join(" ")}" style="fill:none;stroke:${s.color};stroke-width:${s.bold ? 3.5 : 2}"/>`;
+    pts.forEach(p => g += `<circle cx="${p[0]}" cy="${p[1]}" r="${s.bold ? 4.5 : 3.5}" style="fill:${s.color}"><title>${esc(s.name)}: ${fmt(p[2])}</title></circle>`);
+    const lp = pts.at(-1); ends.push({ y: lp[1], t: `${s.name} ${fmt(lp[2])}`, c: s.color, b: s.bold });
+  });
+  ends.sort((a, b) => a.y - b.y); let last = -99; ends.forEach(e => { e.y = Math.max(e.y, last + 13); last = e.y; g += `<text x="${W - R + 8}" y="${e.y + 4}" style="fill:${e.c};font-weight:${e.b ? 700 : 600}">${esc(e.t)}</text>`; });
+  return `<svg class="ch" viewBox="0 0 ${W} ${H}" role="img">${g}<line class="axis" x1="${L}" x2="${W - R}" y1="${T + ih}" y2="${T + ih}"/></svg>`;
+}
+function chartCard(title, note, svg, extra = "") { return `<section class="panel chart"><h3>${title}</h3>${note ? `<p class="muted small" style="margin:2px 0 8px">${note}</p>` : ""}${svg}${extra}</section>`; }
+
+/* ---------------- GRAF ANALISIS ---------------- */
+VIEWS.graf = el => {
+  const c = S.cfg; if (!c.kelas.length) { el.innerHTML = emptyState("Belum ada data untuk graf."); return; }
+  if (!darjahList().includes(+S.sel.darjah)) S.sel.darjah = darjahList()[0];
+  const d = +S.sel.darjah; const u = c.ujian.find(x => x.id === S.sel.ujian) || c.ujian[0]; S.sel.ujian = u.id;
+  const subj = subjOf(d); if (!subj.find(s => s.kod === S.sel.subjek)) S.sel.subjek = subj[0]?.kod;
+  const kls = kelasOfDarjah(d).slice().sort((a, b) => a.nama.localeCompare(b.nama)); const rows = hasilDarjah(u.id, d);
+  const all = aggKeseluruhan(rows); const perK = kls.map(k => ({ k, a: aggKeseluruhan(rows.filter(r => r.kelas.id === k.id)) }));
+  const sAgg = subj.map(s => ({ s, a: aggSubjek(rows, s.kod) })).filter(x => x.a.daftar);
+  const s = subj.find(x => x.kod === S.sel.subjek);
+  /* 1 grade distribution by class */
+  const g1 = svgStack([...perK.map(x => ({ label: x.k.nama, cnt: x.a.g, tot: x.a.ent + x.a.th })), { label: `TAHUN ${d}`, cnt: all.g, tot: all.ent + all.th, bold: true }]);
+  /* 2 GPMP by subject */
+  const g2 = svgBar({ labels: sAgg.map(x => x.s.kod), titles: sAgg.map(x => x.s.nama), values: sAgg.map(x => x.a.gp), max: 6, colors: sAgg.map(x => gpCol(x.a.gp)), yfmt: v => fmt(v, 1) });
+  /* 3 pass % by class */
+  const g3 = svgBar({ labels: perK.map(x => x.k.nama.replace(/^\d+\s*/, "")), titles: perK.map(x => x.k.nama), values: perK.map(x => x.a.hadir ? pc(x.a.lulus, x.a.hadir) : null), max: 100, fmtv: v => fmt(v, 0) + "%", colors: perK.map(x => { const p = pc(x.a.lulus, x.a.hadir); return p >= 90 ? "var(--gA)" : p >= 70 ? "var(--gB)" : p >= 50 ? "var(--gC)" : "var(--gE)"; }), yfmt: v => fmt(v, 0) + "%" });
+  /* 4 GPK/GPD across exams */
+  const perU = c.ujian.map(x => ({ u: x, rows: hasilDarjah(x.id, d) }));
+  const series = [...kls.map((k, i) => ({ name: k.nama, color: SER[i % SER.length], values: perU.map(p => aggKeseluruhan(p.rows.filter(r => r.kelas.id === k.id)).gp) })), { name: `GPD Thn ${d}`, color: "var(--ink)", bold: true, values: perU.map(p => aggKeseluruhan(p.rows).gp) }];
+  const gpAll = series.flatMap(x => x.values).filter(v => v != null);
+  const lo = Math.max(1, Math.floor((Math.min(...gpAll, 6)) * 2) / 2 - .5), hi = Math.min(6, Math.ceil((Math.max(...gpAll, 1)) * 2) / 2 + .5);
+  const g4 = svgLine({ labels: c.ujian.map(x => x.nama), series, min: lo, max: Math.max(hi, lo + 1) });
+  /* 5 GP histogram */
+  const bins = []; for (let b = 1; b < 6; b += .5) bins.push([b, b + .5]);
+  const hist = bins.map(([a, b], i) => rows.filter(r => r.k.gp != null && r.k.gp >= a && (i === bins.length - 1 ? r.k.gp <= b : r.k.gp < b)).length);
+  const g5 = svgBar({ labels: bins.map(([a, b]) => `${fmt(a, 1)}–${fmt(b, 1)}`), values: hist, colors: bins.map(([a]) => gpCol(a + .25)), fmtv: v => String(v) });
+  /* 6 selected subject: grades by class + mean mark */
+  const g6 = s ? svgStack([...kls.map(k => { const a = aggSubjek(rows.filter(r => r.kelas.id === k.id), s.kod); return { label: k.nama, cnt: a.g, tot: a.daftar }; }), (() => { const a = aggSubjek(rows, s.kod); return { label: `TAHUN ${d}`, cnt: a.g, tot: a.daftar, bold: true }; })()]) : "";
+  const avgMark = kid => { const v = rows.filter(r => !kid || r.kelas.id === kid).map(r => r.k.rows.find(x => x.kod === s?.kod)).filter(x => x && x.v !== "TH").map(x => +x.v); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
+  const g7 = s ? svgBar({ labels: [...kls.map(k => k.nama.replace(/^\d+\s*/, "")), "TAHUN " + d], titles: [...kls.map(k => k.nama), "Tahun " + d], values: [...kls.map(k => avgMark(k.id)), avgMark()], max: 100, colors: [...kls.map((k, i) => SER[i % SER.length]), "var(--ink)"], yfmt: v => fmt(v, 0) }) : "";
+  /* 8 keputusan murid */
+  const kep = [["LULUS", all.lulus, "var(--gA)"], ["BELUM CAPAI MINIMUM", all.gagal, "var(--gF)"], ["TIDAK HADIR", rows.filter(r => r.k.keputusan === "TIDAK HADIR").length, "var(--gTH)"], ["TIADA MARKAH", rows.filter(r => !r.k.ada).length, "var(--line)"]].filter(x => x[1]);
+  const g8 = svgBar({ labels: kep.map(x => x[0]), values: kep.map(x => x[1]), colors: kep.map(x => x[2]), fmtv: v => `${v} (${fmt(pc(v, rows.length), 0)}%)` });
+  el.innerHTML = `<div class="head"><div><div class="eyebrow">Graf analisis · Tahun ${d}</div><h2>${esc(u.nama)}</h2></div>${topLevel ? `<button class="btn noprint" id="gPrint">Cetak</button>` : ""}</div>
+  ${exTabs("gTabs")}
+  <div class="toolbar noprint">${darjahSel("gD")}<label class="f">Subjek (graf 6 &amp; 7)<select class="inp" id="gS">${opt(subj, S.sel.subjek, s => s.kod, s => s.nama)}</select></label></div>
+  <div class="stats">
+    <div class="stat"><span class="eyebrow">GPD Tahun ${d}</span><b>${fmt(all.gp)}</b><span class="muted small">${esc(u.nama)}</span></div>
+    <div class="stat"><span class="eyebrow">Murid lulus</span><b>${fmt(pc(all.lulus, all.hadir), 1)}%</b><span class="muted small">${all.lulus} daripada ${all.hadir} murid</span></div>
+    <div class="stat"><span class="eyebrow">Gred A</span><b>${fmt(pc(all.g.A || 0, all.ent), 1)}%</b><span class="muted small">${all.g.A || 0} daripada ${all.ent} keputusan subjek</span></div>
+    <div class="stat"><span class="eyebrow">Subjek terbaik</span><b>${esc(sAgg.slice().sort((a, b) => a.a.gp - b.a.gp)[0]?.s.kod || "–")}</b><span class="muted small">GPMP ${fmt(sAgg.slice().sort((a, b) => a.a.gp - b.a.gp)[0]?.a.gp)}</span></div>
+  </div>
+  <div class="charts">
+    ${chartCard("1. Taburan gred mengikut kelas", "Peratus gred bagi semua subjek yang diambil dalam setiap kelas.", g1, legend())}
+    ${chartCard("2. GPMP mengikut subjek", "Gred purata mata pelajaran (1 = terbaik, 6 = terlemah). Bar lebih pendek bermaksud lebih baik.", g2)}
+    ${chartCard("3. Peratus murid lulus mengikut kelas", "Murid lulus = tiada gred F dalam semua subjek.", g3)}
+    ${chartCard("4. GPK &amp; GPD merentas ujian", "Garisan yang naik ke atas bermaksud prestasi bertambah baik (GP menurun).", g4)}
+    ${chartCard("5. Taburan GP murid", "Bilangan murid mengikut julat gred purata (GP).", g5)}
+    ${chartCard("8. Keputusan murid", `Status keseluruhan ${rows.length} murid Tahun ${d}.`, g8)}
+    ${s ? chartCard(`6. Taburan gred ${esc(s.nama)}`, "Peratus gred subjek terpilih bagi setiap kelas.", g6, legend()) : ""}
+    ${s ? chartCard(`7. Purata markah ${esc(s.nama)}`, "Purata markah murid yang hadir (0–100).", g7) : ""}
+  </div>`;
+  $$("#gTabs button").forEach(b => b.onclick = () => { S.sel.ujian = b.dataset.u; render(); });
+  $("#gD").onchange = e => { S.sel.darjah = +e.target.value; render(); };
+  $("#gS").onchange = e => { S.sel.subjek = e.target.value; render(); };
+  $("#gPrint") && ($("#gPrint").onclick = () => window.print());
+};
+
+/* ---------------- SEMAKAN PENTADBIR ---------------- */
+function semakanData(uId) {
+  const out = [];
+  for (const d of darjahList()) for (const k of kelasOfDarjah(d)) for (const s of subjOf(d)) {
+    const ms = muridOf(k.id); const kosong = ms.filter(m => { const v = recOf(uId, k.id, m.id)?.m?.[s.kod]; return v == null || v === ""; });
+    const a = (S.audit[mkKey(uId, k.id)] || {})[s.kod];
+    out.push({ d, k, s, bil: ms.length, isi: ms.length - kosong.length, kosong, a, guru: guruSubjek(k.id, s.kod) || a?.nama || "" , guruTetap: !!guruSubjek(k.id, s.kod) });
+  }
+  return out;
+}
+VIEWS.semakan = el => {
+  if (!isAdmin()) { el.innerHTML = emptyState("Hanya pentadbir boleh membuka semakan."); return; }
+  const c = S.cfg; if (!c.kelas.length) { el.innerHTML = emptyState("Belum ada kelas."); return; }
+  const u = c.ujian.find(x => x.id === S.sel.ujian) || c.ujian[0]; S.sel.ujian = u.id;
+  const data = semakanData(u.id); const teras = data.filter(x => !x.s.pilihan);
+  const belum = teras.filter(x => x.kosong.length); const tiada = teras.filter(x => !x.isi);
+  const kelasLengkap = c.kelas.filter(k => !teras.some(x => x.k.id === k.id && x.kosong.length)).length;
+  /* group outstanding work by subject teacher */
+  const byGuru = {}; for (const x of belum) { const g = x.guru || "GURU SUBJEK BELUM DITETAPKAN"; (byGuru[g] = byGuru[g] || []).push(x); }
+  const guruKeys = Object.keys(byGuru).sort((a, b) => byGuru[b].reduce((s, x) => s + x.kosong.length, 0) - byGuru[a].reduce((s, x) => s + x.kosong.length, 0));
+  const cell = x => {
+    const st = x.s.pilihan ? "opt" : !x.bil ? "opt" : x.isi === x.bil ? "ok" : x.isi ? "part" : "none";
+    return `<td><button class="cell ${st}" data-cell="${x.k.id}|${x.s.kod}" title="${esc(x.s.nama)} · ${esc(x.k.nama)}">
+      <b class="num">${x.isi}/${x.bil}</b><span>${x.s.pilihan ? "pilihan" : x.guru ? esc(x.guru.replace(/^(CIKGU|PN\.?|EN\.?|PUAN|ENCIK)\s+/i, "").split(" ").slice(0, 2).join(" ")) : "—"}</span></button></td>`;
+  };
+  el.innerHTML = `<div class="head"><div><div class="eyebrow">Semakan pentadbir</div><h2>Status isian markah</h2></div></div>
+  ${exTabs("smTabs")}
+  <div class="stats">
+    <div class="stat"><span class="eyebrow">Kelas lengkap</span><b>${kelasLengkap}/${c.kelas.length}</b><span class="muted small">semua subjek teras diisi</span></div>
+    <div class="stat"><span class="eyebrow">Subjek belum lengkap</span><b>${belum.length}</b><span class="muted small">gabungan kelas × subjek teras</span></div>
+    <div class="stat"><span class="eyebrow">Belum mula diisi</span><b>${tiada.length}</b><span class="muted small">kelas × subjek tanpa sebarang markah</span></div>
+    <div class="stat"><span class="eyebrow">Markah belum diisi</span><b>${belum.reduce((s, x) => s + x.kosong.length, 0)}</b><span class="muted small">jumlah murid × subjek teras</span></div>
+  </div>
+  <div class="legend"><span><i style="background:var(--gA)"></i>Lengkap</span><span><i style="background:var(--gC)"></i>Separuh</span><span><i style="background:var(--gF)"></i>Belum diisi</span><span><i style="background:var(--line)"></i>Subjek pilihan (tidak dikira)</span><span>Klik petak untuk senarai murid dan tetapkan guru subjek.</span></div>
+  ${darjahList().map(d => { const subj = subjOf(d); return `<div class="panel"><h3>Tahun ${d}</h3><div class="tw"><table class="t smt"><thead><tr><th class="l sticky">Kelas</th>${subj.map(s => `<th title="${esc(s.nama)}">${esc(s.kod)}</th>`).join("")}</tr></thead><tbody>
+    ${kelasOfDarjah(d).slice().sort((a, b) => a.nama.localeCompare(b.nama)).map(k => `<tr><td class="l sticky"><b>${esc(k.nama)}</b><br><span class="muted small">${muridOf(k.id).length} murid</span></td>${subj.map(s => cell(data.find(x => x.k.id === k.id && x.s.kod === s.kod))).join("")}</tr>`).join("")}
+  </tbody></table></div></div>`; }).join("")}
+  <div class="panel"><div class="row" style="justify-content:space-between"><h3>Untuk perhatian guru subjek</h3>${belum.length ? `<button class="btn" id="smCopy">Salin senarai (WhatsApp)</button>` : ""}</div>
+    ${belum.length ? `<div class="guru-list">${guruKeys.map(g => `<div class="gl"><div class="row" style="justify-content:space-between"><b>${esc(g)}</b><span class="pill no">${byGuru[g].reduce((s, x) => s + x.kosong.length, 0)} markah</span></div>
+      <ul>${byGuru[g].map(x => `<li><button class="linkbtn" data-cell="${x.k.id}|${x.s.kod}">${esc(x.k.nama)} · ${esc(x.s.nama)}</button> <span class="muted">— ${x.kosong.length} daripada ${x.bil} murid belum diisi${x.a ? `; kemas kini terakhir ${esc(fmtMasa(x.a.masa))}` : "; belum pernah disimpan"}</span></li>`).join("")}</ul></div>`).join("")}</div>
+      <p class="muted small" style="margin:8px 0 0">Nama guru diambil daripada tetapan guru subjek; jika belum ditetapkan, daripada guru yang terakhir mengemas kini subjek itu.</p>` : `<p class="muted" style="margin:0">Semua subjek teras untuk ${esc(u.nama)} telah lengkap diisi.</p>`}
+  </div>`;
+  $$("#smTabs button").forEach(b => b.onclick = () => { S.sel.ujian = b.dataset.u; render(); });
+  $$("[data-cell]").forEach(b => b.onclick = () => { const [kid, kod] = b.dataset.cell.split("|"); semakanCell(u, data.find(x => x.k.id === kid && x.s.kod === kod)); });
+  $("#smCopy") && ($("#smCopy").onclick = async () => {
+    const txt = `*Peringatan isian markah ${u.nama} ${S.tahun}*\n${c.sekolah.nama}\n\n` + guruKeys.map(g => `${g}\n` + byGuru[g].map(x => `- ${x.k.nama} ${x.s.kod}: ${x.kosong.length}/${x.bil} murid belum diisi`).join("\n")).join("\n\n") + `\n\nSila lengkapkan dalam eMarkah dan tekan Simpan. Terima kasih.`;
+    try { await navigator.clipboard.writeText(txt); toast("Senarai disalin."); } catch (e) { modal(`<h3>Salin teks ini</h3><textarea class="inp" rows="12" style="width:100%">${esc(txt)}</textarea><div class="row" style="justify-content:flex-end"><button class="btn" data-close>Tutup</button></div>`, b => $("textarea", b).select()); }
+  });
+};
+function semakanCell(u, x) {
+  const names = [...new Set([...S.cfg.kelas.map(k => k.guru), ...Object.values(S.cfg.guruSubjek || {}).flatMap(o => Object.values(o)), ...Object.values(S.audit).flatMap(a => Object.values(a).map(v => v.nama)), ...(S.staffNames || [])].filter(Boolean))].sort();
+  modal(`<div class="row"><h3 class="grow">${esc(x.k.nama)} · ${esc(x.s.nama)}</h3><span class="pill ${x.isi === x.bil ? "ok" : x.isi ? "mid" : "no"}">${x.isi}/${x.bil} diisi</span></div>
+    <div class="small">${esc(u.nama)} · ${x.a ? `Kemas kini terakhir oleh <b>${esc(x.a.nama)}</b> · ${esc(fmtMasa(x.a.masa))}` : "Belum pernah disimpan"}</div>
+    <label class="f">Guru subjek<input class="inp" id="cG" list="cGl" value="${esc(guruSubjek(x.k.id, x.s.kod))}" placeholder="Nama guru yang mengajar subjek ini" style="text-transform:uppercase"></label>
+    <datalist id="cGl">${names.map(n => `<option value="${esc(n)}">`).join("")}</datalist>
+    <label class="chk"><input type="checkbox" id="cAll"> Guna guru ini untuk ${esc(x.s.kod)} di semua kelas Tahun ${x.d}</label>
+    ${x.kosong.length ? `<div><div class="eyebrow" style="margin-bottom:6px">Murid belum diisi (${x.kosong.length})</div><div class="tw" style="max-height:240px"><table class="t"><tbody>${x.kosong.map((m, i) => `<tr><td>${i + 1}</td><td class="l">${esc(m.nama)}</td></tr>`).join("")}</tbody></table></div></div>` : `<p class="muted" style="margin:0">Semua murid telah diisi.</p>`}
+    <div class="row" style="justify-content:flex-end"><button class="btn" id="cOpen">Buka di Isi Markah</button><button class="btn" data-close>Tutup</button><button class="btn pri" id="cSave">Simpan guru subjek</button></div>`, (box, close) => {
+    $("#cSave", box).onclick = async () => {
+      const g = $("#cG", box).value.trim().toUpperCase(); const c = S.cfg; c.guruSubjek = c.guruSubjek || {};
+      const targets = $("#cAll", box).checked ? kelasOfDarjah(x.d) : [x.k];
+      for (const k of targets) { c.guruSubjek[k.id] = c.guruSubjek[k.id] || {}; if (g) c.guruSubjek[k.id][x.s.kod] = g; else delete c.guruSubjek[k.id][x.s.kod]; }
+      await saveCfg(); close(); toast("Guru subjek disimpan."); render();
+    };
+    $("#cOpen", box).onclick = () => { close(); Object.assign(S.sel, { kelas: x.k.id, subjek: x.s.kod, isiMod: "subjek", ujian: u.id, isiDarjah: x.d }); S.view = "isi"; render(); };
+  });
+}
+
+/* ---------------- SLIP ---------------- */
+const SLIP_ITEMS = [
+  ["ic", "No. MyKid / KP"], ["markah", "Markah subjek"], ["gred", "Gred subjek"], ["taksiran", "Taksiran gred"],
+  ["jumlah", "Jumlah markah"], ["purata", "Purata markah"], ["gp", "Gred purata (GP)"], ["analisis", "Analisis bilangan gred"],
+  ["keputusan", "Keputusan (Lulus / Belum capai)"], ["kdk", "Kedudukan dalam kelas"], ["kdt", "Kedudukan dalam darjah"],
+  ["kehadiran", "Kehadiran"], ["ulasan", "Ulasan guru kelas"], ["tandatangan", "Ruang tandatangan"], ["graf", "Graf perkembangan (portal ibu bapa)"]
+];
+const slipOpt = (cfg = S.cfg) => Object.fromEntries(SLIP_ITEMS.map(([k]) => [k, cfg?.slip?.[k] !== false]));
+function slipHTML(p) {
+  /* p: {sekolah, ujianNama, tahun, nama, ic, kelas, guru, gb, k, kdk, kdkN, kdt, kdtN, opt} */
+  const k = p.k; const o = p.opt || slipOpt();
+  const kv = [];
+  if (o.jumlah) kv.push(["Jumlah markah", k.hadir ? k.jumlah : "–", 1]);
+  if (o.purata) kv.push(["Purata", fmt(k.purata), 1]);
+  if (o.gp) kv.push(["Gred purata (GP)", fmt(k.gp), 1]);
+  if (o.analisis) kv.push(["Analisis", esc(k.analisis) || "–"]);
+  if (o.keputusan) kv.push(["Keputusan", k.keputusan ? `<span class="pill ${k.keputusan === "LULUS" ? "ok" : k.keputusan === "TIDAK HADIR" ? "mid" : "no"}">${k.keputusan}</span>` : "–"]);
+  if (o.kdk) kv.push(["Kedudukan dalam kelas", p.kdk ? p.kdk + " / " + p.kdkN : "–", 1]);
+  if (o.kdt) kv.push(["Kedudukan dalam darjah", p.kdt ? p.kdt + " / " + p.kdtN : "–", 1]);
+  if (o.kehadiran) kv.push(["Kehadiran", esc(k.kehadiran) || "–"]);
+  if (o.ulasan) kv.push(["Ulasan guru kelas", `<span style="font-weight:500">${esc(k.ulasan) || "–"}</span>`]);
+  return `<article class="slip">
+    <div class="slip-h"><div class="crest">${esc((p.sekolah.nama || "S").split(" ").filter(w => w.length > 1).slice(0, 3).map(w => w[0]).join(""))}</div>
+      <div><div style="font-family:var(--font-d);font-weight:800;font-size:1.05rem">SLIP ${esc(p.ujianNama)} ${esc(p.tahun)}</div><div class="small" style="opacity:.85">${esc(p.sekolah.nama)} · ${esc(p.sekolah.alamat || "")}</div></div></div>
+    <div class="slip-b">
+      <dl class="kv"><dt>Nama</dt><dd>${esc(p.nama)}</dd>${o.ic ? `<dt>No. MyKid / KP</dt><dd class="num">${esc(p.ic)}</dd>` : ""}<dt>Kelas</dt><dd>${esc(p.kelas)}</dd></dl>
+      ${k.rows.length ? `<div class="tw"><table class="t"><thead><tr><th class="l">Mata pelajaran</th>${o.markah ? "<th>Markah</th>" : ""}${o.gred ? "<th>Gred</th>" : ""}${o.taksiran ? `<th class="l">Taksiran gred</th>` : ""}</tr></thead><tbody>
+        ${k.rows.map(r => `<tr><td class="l">${esc(r.nama)}</td>${o.markah ? `<td class="num">${esc(r.v)}</td>` : ""}${o.gred ? `<td>${gchip(r.g)}</td>` : ""}${o.taksiran ? `<td class="l small">${esc(r.label)}</td>` : ""}</tr>`).join("")}
+      </tbody></table></div>
+      ${kv.length ? `<dl class="kv">${kv.map(([t, v, n]) => `<dt>${t}</dt><dd${n ? ` class="num"` : ""}>${v}</dd>`).join("")}</dl>` : ""}` : `<p class="muted">Tiada markah direkodkan untuk ujian ini.</p>`}
+      ${o.tandatangan ? `<div class="sign"><div>${esc(p.guru || "")}<br>Guru Kelas</div><div>${esc(p.gb || "")}<br>Guru Besar</div></div>` : ""}
+    </div></article>`;
+}
+VIEWS.slip = el => {
+  const c = S.cfg; if (!c.kelas.length) { el.innerHTML = emptyState("Belum ada kelas."); return; }
+  if (!kelasById(S.sel.slipKelas)) S.sel.slipKelas = c.kelas[0].id;
+  const k = kelasById(S.sel.slipKelas); const u = c.ujian.find(x => x.id === S.sel.ujian) || c.ujian[0]; S.sel.ujian = u.id;
+  const rows = hasilDarjah(u.id, k.darjah).filter(r => r.kelas.id === k.id);
+  const pick = S.sel.slipMurid && rows.find(r => r.m.id === S.sel.slipMurid) ? [rows.find(r => r.m.id === S.sel.slipMurid)] : rows;
+  el.innerHTML = `<div class="head"><div><div class="eyebrow">Slip keputusan</div><h2>${esc(k.nama)} · ${esc(u.nama)}</h2></div>${topLevel ? `<button class="btn pri" id="sPrint">Cetak ${pick.length > 1 ? pick.length + " slip" : "slip"}</button>` : ""}</div>
+  <div class="toolbar">${ujianSel("sU")}${kelasSel("sK", k.id)}<label class="f">Murid<select class="inp" id="sM"><option value="">Semua murid dalam kelas (${rows.length})</option>${opt(rows.map(r => r.m), S.sel.slipMurid)}</select></label></div>
+  <div class="slips">${pick.map(r => slipHTML({ sekolah: c.sekolah, ujianNama: u.nama, tahun: S.tahun, nama: r.m.nama, ic: r.m.ic, kelas: k.nama, guru: k.guru, gb: c.sekolah.gb, k: r.k, kdk: r.kdk, kdkN: r.kdkN, kdt: r.kdt, kdtN: r.kdtN, opt: slipOpt() })).join("")}</div>`;
+  $("#sU").onchange = e => { S.sel.ujian = e.target.value; render(); };
+  $("#sK").onchange = e => { S.sel.slipKelas = e.target.value; S.sel.slipMurid = ""; render(); };
+  $("#sM").onchange = e => { S.sel.slipMurid = e.target.value; render(); };
+  $("#sPrint") && ($("#sPrint").onclick = () => window.print());
+};
+
+/* ---------------- MURID ---------------- */
+VIEWS.murid = el => {
+  const c = S.cfg; const adm = isAdmin();
+  if (!c.kelas.length) { el.innerHTML = emptyState("Belum ada kelas.", adm ? `<button class="btn pri" id="mImp0">Import Excel</button>` : ""); $("#mImp0") && ($("#mImp0").onclick = () => importDialog()); return; }
+  if (!kelasById(S.sel.muridKelas)) S.sel.muridKelas = c.kelas[0].id;
+  const k = kelasById(S.sel.muridKelas); const ms = muridOf(k.id);
+  el.innerHTML = `<div class="head"><div><div class="eyebrow">Murid &amp; PIN ibu bapa</div><h2>${esc(k.nama)} <span class="muted" style="font-weight:500;font-size:1rem">· ${ms.length} murid</span></h2></div>
+    <div class="row noprint">${adm ? `<button class="btn" id="mImp">Import Excel</button><button class="btn pri" id="mAdd">Tambah murid</button>` : ""}${topLevel ? `<button class="btn" id="mPin">Cetak senarai PIN</button>` : ""}</div></div>
+  <div class="toolbar noprint">${kelasSel("mK", k.id)}<label class="f">Cari<input class="inp" id="mQ" placeholder="Nama atau No. KP"></label></div>
+  <div class="banner noprint">PIN digunakan oleh ibu bapa bersama No. MyKid untuk menyemak keputusan. Edarkan PIN secara tertutup (contoh: dalam sampul surat atau melalui guru kelas).</div>
+  <div class="tw"><table class="t" id="mTbl"><thead><tr><th>No</th><th class="l">No. MyKid / KP</th><th class="l">Nama murid</th><th>PIN</th>${adm ? `<th class="noprint">Tindakan</th>` : ""}</tr></thead><tbody>
+  ${ms.map((m, i) => `<tr data-q="${esc((m.nama + " " + m.ic).toLowerCase())}"><td>${i + 1}</td><td class="l num">${esc(m.ic)}</td><td class="l name">${esc(m.nama)}</td><td><code style="letter-spacing:.12em;font-weight:700">${adm ? esc(m.pin) : "••••••"}</code></td>${adm ? `<td class="noprint"><div class="row" style="flex-wrap:nowrap;justify-content:center"><button class="btn sm" data-ed="${m.id}">Ubah</button><button class="btn sm" data-pin="${m.id}">PIN baharu</button><button class="btn sm danger" data-del="${m.id}">Padam</button></div></td>` : ""}</tr>`).join("") || `<tr><td colspan="5" class="muted">Tiada murid. ${adm ? "Klik Tambah murid atau Import Excel." : ""}</td></tr>`}
+  </tbody></table></div>
+  ${adm ? `<p class="muted small noprint">Selepas menambah murid atau menukar PIN, terbitkan semula portal (Tetapan → Ujian → Kemas kini portal ibu bapa) supaya PIN baharu berfungsi.</p>` : ""}`;
+  $("#mK").onchange = e => { S.sel.muridKelas = e.target.value; render(); };
+  $("#mQ").oninput = e => { const q = e.target.value.toLowerCase(); $$("#mTbl tbody tr").forEach(tr => tr.hidden = tr.dataset.q != null && !tr.dataset.q.includes(q)); };
+  $("#mImp") && ($("#mImp").onclick = () => importDialog());
+  $("#mPin") && ($("#mPin").onclick = () => pinSheet(k));
+  $("#mAdd") && ($("#mAdd").onclick = () => muridForm(k.id));
+  $$("[data-ed]").forEach(b => b.onclick = () => muridForm(k.id, b.dataset.ed));
+  $$("[data-pin]").forEach(b => b.onclick = async () => { const m = ms.find(x => x.id === b.dataset.pin); if (!(await ask(`Jana PIN baharu untuk <b>${esc(m.nama)}</b>? PIN lama tidak lagi berfungsi selepas portal dikemas kini.`))) return; m.pin = genPin(); await saveMurid(k.id); toast("PIN baharu: " + m.pin); render(); });
+  $$("[data-del]").forEach(b => b.onclick = async () => { const m = ms.find(x => x.id === b.dataset.del); if (!(await ask(`Padam <b>${esc(m.nama)}</b> daripada ${esc(k.nama)}? Markah murid ini juga akan hilang.`, "Padam"))) return; S.murid[k.id] = ms.filter(x => x.id !== m.id); await saveMurid(k.id); toast("Murid dipadam."); render(); });
+};
+function muridForm(kid, mid) {
+  const m = mid ? muridOf(kid).find(x => x.id === mid) : { ic: "", nama: "" };
+  modal(`<h3>${mid ? "Ubah murid" : "Tambah murid"}</h3>
+    <label class="f">Nama penuh<input class="inp" id="fN" value="${esc(m.nama)}" style="text-transform:uppercase"></label>
+    <label class="f">No. MyKid / KP<input class="inp" id="fI" value="${esc(m.ic)}"></label>
+    <label class="f">Kelas<select class="inp" id="fK">${opt(S.cfg.kelas, kid)}</select></label>
+    <div class="row" style="justify-content:flex-end"><button class="btn" data-close>Batal</button><button class="btn pri" id="fSave">Simpan</button></div>`, (box, close) => {
+    $("#fSave", box).onclick = async () => {
+      const nama = $("#fN", box).value.trim().toUpperCase(), ic = normIC($("#fI", box).value), nk = $("#fK", box).value;
+      if (!nama || !ic) return toast("Nama dan No. KP diperlukan.");
+      const dup = S.cfg.kelas.flatMap(k => muridOf(k.id)).find(x => normIC(x.ic) === ic && x.id !== mid);
+      if (dup) return toast("No. KP ini sudah wujud: " + dup.nama);
+      if (mid) {
+        Object.assign(m, { nama, ic });
+        if (nk !== kid) { S.murid[kid] = muridOf(kid).filter(x => x.id !== mid); (S.murid[nk] = muridOf(nk)).push(m);
+          for (const u of S.cfg.ujian) { const a = S.markah[mkKey(u.id, kid)]; if (a && a[mid]) { (S.markah[mkKey(u.id, nk)] = S.markah[mkKey(u.id, nk)] || {})[mid] = a[mid]; delete a[mid]; await saveMarkahNow(mkKey(u.id, kid)); await saveMarkahNow(mkKey(u.id, nk)); } }
+          await saveMurid(nk); }
+      } else (S.murid[nk] = muridOf(nk)).push({ id: uid(), ic, nama, pin: genPin() });
+      await saveMurid(kid); close(); toast("Disimpan."); render();
+    };
+  });
+}
+function pinSheet(k) {
+  const ms = muridOf(k.id); const url = S.cfg.sekolah.url || location.href.split("#")[0];
+  const w = document.createElement("div"); w.className = "modal";
+  w.innerHTML = `<div class="box" style="width:min(820px,100%)"><div class="row noprint"><h3 class="grow">Senarai PIN · ${esc(k.nama)}</h3><button class="btn pri" id="pp">Cetak</button><button class="btn" id="pc">Tutup</button></div>
+  <div class="stack" style="gap:8px">${ms.map(m => `<div class="panel" style="padding:10px 14px;break-inside:avoid"><b>${esc(m.nama)}</b> · ${esc(k.nama)}<br><span class="small">Semak keputusan di: <b>${esc(url)}</b><br>No. MyKid: <b>${esc(m.ic)}</b> · PIN: <b style="letter-spacing:.15em">${esc(m.pin)}</b></span></div>`).join("")}</div></div>`;
+  document.body.appendChild(w);
+  $("#pc", w).onclick = () => w.remove();
+  $("#pp", w).onclick = () => { document.body.classList.add("printing-pin"); const st = document.createElement("style"); st.textContent = "@media print{#app{display:none}.modal{position:static;background:none}.modal .box{max-height:none;border:0}}"; document.head.appendChild(st); window.print(); st.remove(); };
+}
+
+/* ---------------- IMPORT / EXPORT EXCEL ---------------- */
+function importDialog() {
+  if (typeof XLSX === "undefined") return toast("Pustaka Excel gagal dimuatkan.");
+  modal(`<h3>Import daripada Excel</h3>
+    <p class="small muted" style="margin:0">Dua format diterima: (1) fail markah seperti <b>TAHUN 6.xlsx</b> (helaian kelas dengan baris "KELAS", "NO IC", "NAMA PELAJAR" dan kod subjek), atau (2) senarai ringkas dengan lajur <b>NO IC</b>, <b>NAMA</b>, <b>KELAS</b>.</p>
+    <input type="file" id="xF" accept=".xlsx,.xls,.csv" class="inp">
+    <label class="f">Masukkan markah ke ujian<select class="inp" id="xU"><option value="">Jangan import markah (murid sahaja)</option>${opt(S.cfg.ujian, S.cfg.ujian[0]?.id)}</select></label>
+    <div id="xPrev" class="small"></div>
+    <div class="row" style="justify-content:flex-end"><button class="btn" data-close>Batal</button><button class="btn pri" id="xGo" disabled>Import</button></div>`, (box, close) => {
+    let parsed = null;
+    $("#xF", box).onchange = async e => {
+      const f = e.target.files[0]; if (!f) return; $("#xPrev", box).textContent = "Membaca fail…";
+      try { const wb = XLSX.read(await f.arrayBuffer(), { type: "array" }); parsed = parseWorkbook(wb); }
+      catch (er) { $("#xPrev", box).textContent = "Gagal membaca: " + er.message; return; }
+      if (!parsed.kelas.length) { $("#xPrev", box).innerHTML = `<span style="color:var(--danger)">Tiada helaian kelas atau senarai murid dikenal pasti.</span>`; return; }
+      $("#xPrev", box).innerHTML = `<div class="tw"><table class="t"><thead><tr><th class="l">Kelas</th><th>Darjah</th><th>Murid</th><th>Ada markah</th></tr></thead><tbody>${parsed.kelas.map(k => `<tr><td class="l">${esc(k.nama)}</td><td>${k.darjah}</td><td>${k.murid.length}</td><td>${k.murid.filter(m => Object.keys(m.m).length).length}</td></tr>`).join("")}</tbody></table></div>${parsed.subjBaru.length ? `<p class="muted">Subjek baharu akan ditambah: ${parsed.subjBaru.map(esc).join(", ")}</p>` : ""}<p class="muted">Murid sedia ada (No. KP sama) akan dikemas kini, bukan digandakan.</p>`;
+      $("#xGo", box).disabled = false;
+    };
+    $("#xGo", box).onclick = async () => { $("#xGo", box).disabled = true; $("#xGo", box).textContent = "Mengimport…"; const r = await applyImport(parsed, $("#xU", box).value); close(); toast(`Import selesai: ${r.baru} murid baharu, ${r.kemas} dikemas kini.`); render(); };
+  });
+}
+function parseWorkbook(wb) {
+  const out = { kelas: [], subjBaru: [] }; const known = new Set(S.cfg.subjek.map(s => s.kod));
+  const cellV = (ws, r, c) => { const x = ws[XLSX.utils.encode_cell({ r, c })]; return x ? (x.v ?? "") : ""; };
+  const nameD = n => { const m = String(n).match(/^\s*(\d)/); return m ? +m[1] : 6; };
+  for (const name of wb.SheetNames) {
+    const ws = wb.Sheets[name]; if (!ws["!ref"]) continue; const R = XLSX.utils.decode_range(ws["!ref"]);
+    /* Format 1: class sheet */
+    if (String(cellV(ws, 0, 1)).trim().toUpperCase() === "KELAS" && String(cellV(ws, 1, 1)).trim().toUpperCase() === "NO IC") {
+      const kn = String(cellV(ws, 0, 2)).trim(); if (!kn) continue;
+      const cols = []; let ulCol = -1, hdCol = -1;
+      for (let c = 4; c <= R.e.c; c++) {
+        const h = String(cellV(ws, 1, c)).trim().toUpperCase(); if (!h) continue;
+        if (h === "ULASAN GURU KELAS") ulCol = c; else if (h === "KEHADIRAN") hdCol = c;
+        else if (c < 55 && (c - 4) % 2 === 0 && /^[A-Z]{1,6}$/.test(h) && !/ G$/.test(h)) { cols.push({ c, kod: h }); if (!known.has(h) && !out.subjBaru.includes(h)) out.subjBaru.push(h); }
+      }
+      const k = { nama: kn, darjah: nameD(kn), murid: [] };
+      for (let r = 2; r <= R.e.r; r++) {
+        const nama = String(cellV(ws, r, 2)).trim(); if (!nama || nama === "#N/A") continue;
+        const ic = normIC(cellV(ws, r, 1)); const m = {};
+        for (const { c, kod } of cols) { const p = parseMark(cellV(ws, r, c)); if (p.ok && p.v != null) m[kod] = p.v; }
+        k.murid.push({ ic, nama: nama.toUpperCase(), m, ulasan: ulCol >= 0 ? String(cellV(ws, r, ulCol)).trim() : "", hadir: hdCol >= 0 ? String(cellV(ws, r, hdCol)).trim() : "" });
+      }
+      if (k.murid.length) out.kelas.push(k);
+      continue;
+    }
+    /* Format 2: simple list (only when the workbook has no class sheets) */
+    if (wb.SheetNames.some(n => { const w = wb.Sheets[n]; return String(cellV(w, 0, 1)).trim().toUpperCase() === "KELAS" && String(cellV(w, 1, 1)).trim().toUpperCase() === "NO IC"; })) continue;
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+    const isNama = x => /^NAMA( (MURID|PELAJAR|PENUH))?$/i.test(String(x).trim());
+    const hi = rows.findIndex(r => r.some(isNama) && r.some(x => /^KELAS$/i.test(String(x).trim())));
+    if (hi < 0) continue;
+    const H = rows[hi].map(x => String(x).trim().toUpperCase());
+    const ci = H.findIndex(x => /^(NO\.? ?IC|NO\.? ?KP|MYKID|NO\.? ?MYKID|IC)/.test(x)), ni = H.findIndex(isNama), ki = H.indexOf("KELAS");
+    const subjCols = H.map((h, i) => ({ h, i })).filter(x => known.has(x.h));
+    for (const r of rows.slice(hi + 1)) {
+      const nama = String(r[ni] || "").trim(), kn = String(r[ki] || "").trim(); if (!nama || !kn) continue;
+      let k = out.kelas.find(x => x.nama.toUpperCase() === kn.toUpperCase()); if (!k) out.kelas.push(k = { nama: kn.toUpperCase(), darjah: nameD(kn), murid: [] });
+      const m = {}; for (const s of subjCols) { const p = parseMark(r[s.i]); if (p.ok && p.v != null) m[s.h] = p.v; }
+      k.murid.push({ ic: ci >= 0 ? normIC(r[ci]) : "", nama: nama.toUpperCase(), m, ulasan: "", hadir: "" });
+    }
+  }
+  return out;
+}
+async function applyImport(p, ujian) {
+  const c = S.cfg; let baru = 0, kemas = 0;
+  for (const kod of p.subjBaru) c.subjek.push({ kod, nama: kod, darjah: ALL });
+  const allM = () => c.kelas.flatMap(k => muridOf(k.id).map(m => ({ m, k })));
+  const touched = new Set(), touchedMk = new Set();
+  for (const ik of p.kelas) {
+    let k = c.kelas.find(x => x.nama.toUpperCase() === ik.nama.toUpperCase());
+    if (!k) { k = { id: "k" + uid(), nama: ik.nama, darjah: ik.darjah, guru: "" }; c.kelas.push(k); }
+    S.murid[k.id] = muridOf(k.id);
+    for (const im of ik.murid) {
+      let found = im.ic ? allM().find(x => normIC(x.m.ic) === im.ic) : allM().find(x => x.m.nama === im.nama && x.k.id === k.id);
+      let m;
+      if (found) { m = found.m; m.nama = im.nama; if (found.k.id !== k.id) { S.murid[found.k.id] = muridOf(found.k.id).filter(x => x.id !== m.id); touched.add(found.k.id); S.murid[k.id].push(m); } kemas++; }
+      else { m = { id: uid(), ic: im.ic || ("TIADA-" + uid()), nama: im.nama, pin: genPin() }; S.murid[k.id].push(m); baru++; }
+      touched.add(k.id);
+      if (ujian && (Object.keys(im.m).length || im.ulasan || im.hadir)) {
+        const key = mkKey(ujian, k.id); S.markah[key] = S.markah[key] || {};
+        const rec = S.markah[key][m.id] = S.markah[key][m.id] || { m: {} };
+        Object.assign(rec.m, im.m); if (im.ulasan) rec.ulasan = im.ulasan; if (im.hadir) rec.hadir = im.hadir; touchedMk.add(key);
+      }
+    }
+  }
+  const oleh = { nama: (S.user?.nama || "") + " (import Excel)", emel: S.user?.emel || "", masa: new Date().toISOString() };
+  for (const key of touchedMk) { const au = S.audit[key] = S.audit[key] || {}; for (const mid in S.markah[key]) for (const kod in (S.markah[key][mid].m || {})) au[kod] = oleh; }
+  await saveCfg(); for (const kid of touched) await saveMurid(kid); for (const key of touchedMk) await saveMarkahNow(key);
+  if (!S.sel.kelas) { S.sel.kelas = c.kelas[0]?.id; S.sel.muridKelas = S.sel.kelas; S.sel.slipKelas = S.sel.kelas; S.sel.darjah = darjahList()[0]; }
+  return { baru, kemas };
+}
+function exportKelas(ujian, kid) {
+  const k = kelasById(kid), u = S.cfg.ujian.find(x => x.id === ujian), subj = subjOf(k.darjah);
+  const rows = hasilDarjah(ujian, k.darjah).filter(r => r.kelas.id === kid);
+  const aoa = [["KELAS", k.nama, "UJIAN", u.nama], ["NO", "NO IC", "NAMA PELAJAR", ...subj.flatMap(s => [s.kod, s.kod + " G"]), "JUMLAH", "PURATA", "GP", "KEPUTUSAN", "KDK", "KDT", "ANALISIS", "KEHADIRAN", "ULASAN GURU KELAS"]];
+  rows.forEach((r, i) => { const mm = recOf(ujian, kid, r.m.id)?.m || {}; aoa.push([i + 1, r.m.ic, r.m.nama, ...subj.flatMap(s => [mm[s.kod] ?? "", gradeOf(mm[s.kod])]), r.k.hadir ? r.k.jumlah : "", r.k.purata != null ? +r.k.purata.toFixed(2) : "", r.k.gp != null ? +r.k.gp.toFixed(2) : "", r.k.keputusan, r.kdk ? `${r.kdk}/${r.kdkN}` : "", r.kdt ? `${r.kdt}/${r.kdtN}` : "", r.k.analisis, r.k.kehadiran, r.k.ulasan]); });
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), k.nama.slice(0, 30));
+  XLSX.writeFile(wb, `${k.nama} ${u.nama} ${S.tahun}.xlsx`);
+}
+
+/* ---------------- PORTAL PUBLISH ---------------- */
+async function publishPortal() {
+  const c = S.cfg; const terbit = c.ujian.filter(u => u.terbit); let n = 0; const so = slipOpt();
+  const cache = {}; for (const u of terbit) for (const d of darjahList()) cache[u.id + "|" + d] = hasilDarjah(u.id, d);
+  const jobs = [];
+  for (const k of c.kelas) for (const m of muridOf(k.id)) jobs.push(async () => {
+    const ex = terbit.map(u => { const r = cache[u.id + "|" + k.darjah].find(x => x.m.id === m.id);
+      const kk = { ...r.k, ulasan: so.ulasan ? r.k.ulasan : "", kehadiran: so.kehadiran ? r.k.kehadiran : "" };
+      return { id: u.id, nama: u.nama, k: kk, kdk: so.kdk ? r.kdk || null : null, kdkN: so.kdk ? r.kdkN || null : null, kdt: so.kdt ? r.kdt || null : null, kdtN: so.kdt ? r.kdtN || null : null }; });
+    const doc = { nama: m.nama, ic: m.ic.length > 4 ? "••••••••" + m.ic.slice(-4) : m.ic, kelas: k.nama, darjah: k.darjah, guru: k.guru || "", tahun: S.tahun, sekolah: c.sekolah, skala: c.skala, slip: so, ujian: ex, dikemas: new Date().toISOString() };
+    const h = await portalKey(m.ic, m.pin);
+    if (m._ph && m._ph !== h) await S.db.del("portal", `${m._ph}_${S.tahun}`).catch(() => { });
+    await S.db.set("portal", `${h}_${S.tahun}`, doc); m._ph = h; n++;
+  });
+  for (let i = 0; i < jobs.length; i += 25) await Promise.all(jobs.slice(i, i + 25).map(f => f()));
+  for (const k of c.kelas) await saveMurid(k.id);
+  c.portalDikemas = new Date().toISOString(); await saveCfg();
+  return n;
+}
+
+/* ---------------- PARENT ---------------- */
+async function parentLogin(ic, pin) {
+  ic = normIC(ic); pin = String(pin).trim().toUpperCase(); if (!ic || pin.length < 6) return toast("Isi No. MyKid dan PIN 6 aksara.");
+  const h = await portalKey(ic, pin);
+  let meta = null; try { meta = await S.db.get("app", "meta"); } catch (e) { }
+  const years = (meta?.tahunList || [String(new Date().getFullYear())]).slice().sort().reverse();
+  const docs = [];
+  for (const y of years) { try { const d = await S.db.get("portal", `${h}_${y}`); if (d) docs.push(d); } catch (e) { } }
+  if (!docs.length) { S.loginTab = "ibubapa"; renderLogin("Tiada keputusan dijumpai. Semak No. MyKid dan PIN, atau keputusan belum diterbitkan oleh sekolah."); return; }
+  const P = S.parent; const exist = P.kids.findIndex(x => x.key === h);
+  if (exist >= 0) P.cur = exist; else { P.kids.push({ key: h, docs }); P.cur = P.kids.length - 1; }
+  P.year = docs[0].tahun; P.ex = null; renderParent();
+}
+function renderParent() {
+  const P = S.parent; const kid = P.kids[P.cur]; const doc = kid.docs.find(d => d.tahun === P.year) || kid.docs[0];
+  const exs = doc.ujian; if (!P.ex || !exs.find(e => e.id === P.ex)) P.ex = exs.at(-1)?.id;
+  const ex = exs.find(e => e.id === P.ex);
+  const po = { ...slipOpt({}), ...(doc.slip || {}) };
+  /* trend data per subject across exams */
+  const subjects = []; exs.forEach(e => e.k.rows.forEach(r => { if (!subjects.find(s => s.kod === r.kod)) subjects.push({ kod: r.kod, nama: r.nama }); }));
+  const exCol = ["var(--gold)", "var(--em)", "var(--gB)", "var(--gD)"];
+  $("#app").innerHTML = `
+  <header class="top"><div class="brand">eMarkah<small>Portal Ibu Bapa · ${esc(doc.sekolah.nama)}</small></div><div class="grow"></div><button class="btn sm" id="pAdd">Tambah anak</button><button class="btn sm" id="pOut">Keluar</button></header>
+  <main class="main" style="max-width:980px;margin:0 auto;width:100%">
+    ${P.kids.length > 1 ? `<div class="kids">${P.kids.map((k, i) => `<button class="kid ${i === P.cur ? "on" : ""}" data-kid="${i}"><b>${esc(k.docs[0].nama)}</b><span class="small muted">${esc(k.docs[0].kelas)}</span></button>`).join("")}</div>` : ""}
+    <div class="head"><div><div class="eyebrow">Keputusan ${esc(doc.tahun)}</div><h2>${esc(doc.nama)}</h2><div class="muted">${esc(doc.kelas)} · Guru kelas: ${esc(doc.guru || "–")}</div></div>
+      ${kid.docs.length > 1 ? `<label class="f">Tahun<select class="inp" id="pY">${kid.docs.map(d => `<option ${d.tahun === doc.tahun ? "selected" : ""}>${d.tahun}</option>`).join("")}</select></label>` : ""}</div>
+    ${!exs.length ? `<div class="panel">Belum ada keputusan ujian yang diterbitkan untuk tahun ini.</div>` : `
+    <div class="stats">${exs.map(e => `<button class="stat" data-ex="${e.id}" style="text-align:left;cursor:pointer;${e.id === P.ex ? "border-color:var(--em);box-shadow:0 0 0 3px var(--em-soft)" : ""}"><span class="eyebrow">${esc(e.nama)}</span>${po.gp ? `<b>${fmt(e.k.gp)}</b><span class="muted small">Gred purata (GP)${po.purata ? ` · Purata ${fmt(e.k.purata)}%` : ""}</span>` : po.purata ? `<b>${fmt(e.k.purata)}%</b><span class="muted small">Purata markah</span>` : `<span class="muted small">Klik untuk lihat slip</span>`}${po.keputusan ? `<span>${kepPill(e.k.keputusan)}</span>` : ""}</button>`).join("")}</div>
+    ${exs.length > 1 && po.graf && po.markah ? `<div class="panel"><h3>Perkembangan markah setiap subjek</h3><div class="ex-key" style="margin:6px 0 12px">${exs.map((e, i) => `<span><i style="background:${exCol[i % 4]}"></i>${esc(e.nama)}</span>`).join("")}</div>
+      <div class="trend">${subjects.map(s => `<div class="tr"><div title="${esc(s.nama)}"><b>${esc(s.kod)}</b> <span class="muted small">${esc(s.nama.length > 22 ? s.nama.slice(0, 20) + "…" : s.nama)}</span></div><div class="bars">${exs.map((e, i) => { const r = e.k.rows.find(x => x.kod === s.kod); const v = r && r.v !== "TH" ? +r.v : null; return `<div class="bar" style="width:${v == null ? 0 : Math.max(1, v * 0.82)}%;background:${exCol[i % 4]}"><span>${r ? esc(r.v) + " " + esc(r.g) : "–"}</span></div>`; }).join("")}</div></div>`).join("")}</div></div>` : ""}
+    ${slipHTML({ sekolah: doc.sekolah, ujianNama: ex.nama, tahun: doc.tahun, nama: doc.nama, ic: doc.ic, kelas: doc.kelas, guru: doc.guru, gb: doc.sekolah.gb, k: ex.k, kdk: ex.kdk, kdkN: ex.kdkN, kdt: ex.kdt, kdtN: ex.kdtN, opt: po })}
+    ${topLevel ? `<div><button class="btn" id="pPrint">Cetak slip</button></div>` : ""}`}
+  </main>`;
+  $("#pOut").onclick = () => { S.parent = { kids: [], cur: 0, ex: null }; S.loginTab = "ibubapa"; renderLogin(); };
+  $("#pAdd").onclick = () => modal(`<h3>Tambah anak</h3><label class="f">No. MyKid / KP<input class="inp" id="aIc"></label><label class="f">PIN<input class="inp" id="aPin" maxlength="6" style="text-transform:uppercase"></label><div class="row" style="justify-content:flex-end"><button class="btn" data-close>Batal</button><button class="btn pri" id="aGo">Semak</button></div>`, (b, close) => { $("#aGo", b).onclick = async () => { const ic = $("#aIc", b).value, pin = $("#aPin", b).value; close(); await parentLogin(ic, pin); }; });
+  $$("[data-kid]").forEach(b => b.onclick = () => { P.cur = +b.dataset.kid; P.year = null; P.ex = null; renderParent(); });
+  $$("[data-ex]").forEach(b => b.onclick = () => { P.ex = b.dataset.ex; renderParent(); });
+  $("#pY") && ($("#pY").onchange = e => { P.year = e.target.value; P.ex = null; renderParent(); });
+  $("#pPrint") && ($("#pPrint").onclick = () => window.print());
+}
+
+/* ---------------- TETAPAN ---------------- */
+VIEWS.tetapan = el => {
+  if (!isAdmin()) { el.innerHTML = emptyState("Hanya pentadbir boleh mengubah tetapan."); return; }
+  const c = S.cfg; const nU = c.ujian.length;
+  el.innerHTML = `<div class="head"><div><div class="eyebrow">Pentadbir</div><h2>Tetapan tahun ${S.tahun}</h2></div></div>
+  <div class="panel stack"><h3>Ujian sepanjang tahun</h3>
+    <div class="row"><span>Bilangan ujian tahun ini:</span><div class="seg" id="nU">${[1, 2, 3, 4].map(n => `<button data-n="${n}" class="${n === nU ? "on" : ""}">${n}</button>`).join("")}</div></div>
+    <div class="tw"><table class="t"><thead><tr><th>Bil</th><th class="l">Nama ujian</th><th>Kunci isian</th><th>Terbit kepada ibu bapa</th><th>Isian</th></tr></thead><tbody>
+      ${c.ujian.map((u, i) => { let n = 0; c.kelas.forEach(k => n += Object.keys(S.markah[mkKey(u.id, k.id)] || {}).length); return `<tr><td>${i + 1}</td><td class="l"><input class="inp" data-un="${i}" value="${esc(u.nama)}" style="width:220px"></td><td><label class="chk"><input type="checkbox" data-uk="${i}" ${u.kunci ? "checked" : ""}> Kunci</label></td><td><label class="chk"><input type="checkbox" data-ut="${i}" ${u.terbit ? "checked" : ""}> Terbit</label></td><td class="num">${n} murid</td></tr>`; }).join("")}
+    </tbody></table></div>
+    <div class="row"><button class="btn gold" id="pub">Kemas kini portal ibu bapa</button><span class="muted small">${c.portalDikemas ? "Kali terakhir: " + new Date(c.portalDikemas).toLocaleString("ms-MY") : "Belum pernah diterbitkan."} Klik selepas markah disahkan, selepas menukar status Terbit, atau selepas menukar PIN.</span></div>
+  </div>
+  <div class="panel stack"><h3>Paparan slip keputusan</h3>
+    <p class="muted small" style="margin:0">Hidupkan atau matikan maklumat pada slip (cetakan guru dan portal ibu bapa). Disimpan serta-merta. Klik <b>Kemas kini portal ibu bapa</b> supaya ibu bapa melihat perubahan.</p>
+    <div class="slipset"><div class="toggles">${SLIP_ITEMS.map(([kk, l]) => `<label><span>${l}</span><span class="sw"><input type="checkbox" data-sl="${kk}" ${slipOpt()[kk] ? "checked" : ""}><span></span></span></label>`).join("")}</div>
+    <div><div class="eyebrow" style="margin-bottom:6px">Pratonton</div><div id="slipPrev"></div></div></div></div>
+  <div class="grid2">
+    <div class="panel stack"><h3>Maklumat sekolah</h3>
+      <label class="f">Nama sekolah<input class="inp" id="sN" value="${esc(c.sekolah.nama)}"></label>
+      <label class="f">Alamat ringkas<input class="inp" id="sA" value="${esc(c.sekolah.alamat)}"></label>
+      <label class="f">Nama Guru Besar (untuk slip)<input class="inp" id="sG" value="${esc(c.sekolah.gb)}"></label>
+      <label class="f">Alamat laman eMarkah (untuk slip PIN)<input class="inp" id="sU" value="${esc(c.sekolah.url || "")}" placeholder="https://skjalanbintang.github.io/…"></label>
+      <button class="btn pri" id="sSave" style="justify-self:start">Simpan</button></div>
+    <div class="panel stack"><h3>Tahun akademik</h3>
+      <p class="muted small" style="margin:0">Tahun aktif: <b>${esc(S.meta.tahunAktif)}</b>. Tahun baharu menyalin tetapan (subjek, kelas, skala, nama ujian). Murid dan markah bermula kosong; import senarai murid baharu selepas itu. Data tahun lepas kekal dan boleh dipilih di bar atas.</p>
+      <div class="row"><input class="inp" id="nY" value="${+S.meta.tahunList.slice().sort().at(-1) + 1}" style="width:100px"><button class="btn" id="nYGo">Mula tahun baharu</button></div></div>
+  </div>
+  <div class="panel stack"><h3>Kelas</h3>
+    <div class="tw"><table class="t"><thead><tr><th class="l">Nama kelas</th><th>Darjah</th><th class="l">Guru kelas</th><th>Murid</th><th></th></tr></thead><tbody>
+      ${c.kelas.map((k, i) => `<tr><td class="l"><input class="inp" data-kn="${i}" value="${esc(k.nama)}"></td><td><select class="inp" data-kd="${i}">${ALL.map(d => `<option ${+k.darjah === d ? "selected" : ""}>${d}</option>`).join("")}</select></td><td class="l"><input class="inp" data-kg="${i}" value="${esc(k.guru || "")}" style="width:260px"></td><td>${muridOf(k.id).length}</td><td><button class="btn sm danger" data-kx="${i}">Padam</button></td></tr>`).join("")}
+    </tbody></table></div><div class="row"><button class="btn" id="kAdd">Tambah kelas</button><button class="btn pri" id="kSave">Simpan kelas</button><button class="btn" id="kImp">Import Excel</button></div></div>
+  <div class="panel stack"><h3>Subjek</h3>
+    <div class="tw"><table class="t"><thead><tr><th class="l">Kod</th><th class="l">Nama subjek</th><th>Darjah</th><th>Pilihan</th><th></th></tr></thead><tbody>
+      ${c.subjek.map((s, i) => `<tr><td class="l"><input class="inp" data-sk="${i}" value="${esc(s.kod)}" style="width:80px"></td><td class="l"><input class="inp" data-sn="${i}" value="${esc(s.nama)}" style="width:300px"></td><td>${ALL.map(d => `<label class="chk"><input type="checkbox" data-sd="${i}" value="${d}" ${(s.darjah || ALL).map(Number).includes(d) ? "checked" : ""}>${d}</label>`).join("")}</td><td><input type="checkbox" data-sp="${i}" ${s.pilihan ? "checked" : ""} title="Subjek pilihan (tidak semua murid ambil)"></td><td><button class="btn sm danger" data-sx="${i}">Padam</button></td></tr>`).join("")}
+    </tbody></table></div><div class="row"><button class="btn" id="sbAdd">Tambah subjek</button><button class="btn pri" id="sbSave">Simpan subjek</button></div></div>
+  <div class="grid2">
+    <div class="panel stack"><h3>Skala gred</h3>
+      <div class="tw"><table class="t"><thead><tr><th>Gred</th><th>Markah minimum</th><th class="l">Taksiran</th><th>Lulus</th></tr></thead><tbody>
+      ${skalaSorted().map((s, i) => `<tr><td>${gchip(s.g)}</td><td><input class="inp num" data-gm="${s.g}" value="${s.min}" style="width:70px"></td><td class="l"><input class="inp" data-gl="${s.g}" value="${esc(s.label)}" style="width:250px"></td><td><input type="checkbox" data-gp="${s.g}" ${s.lulus ? "checked" : ""}></td></tr>`).join("")}
+      </tbody></table></div><button class="btn pri" id="gSave" style="justify-self:start">Simpan skala</button></div>
+    <div class="panel stack"><h3>Bank ulasan guru kelas</h3><p class="muted small" style="margin:0">Satu ulasan setiap baris, dari prestasi terbaik ke terendah (butang Auto memilih ikut GP).</p>
+      <textarea class="inp" id="ulT" rows="9">${esc(c.ulasan.join("\n"))}</textarea><button class="btn pri" id="ulSave" style="justify-self:start">Simpan ulasan</button></div>
+  </div>
+  ${S.mode === "firebase" ? `<div class="panel stack" id="staffP"><h3>Pengguna (guru &amp; pentadbir)</h3><div id="staffL" class="muted">Memuatkan…</div>
+    <div class="row" style="align-items:end"><label class="f">Nama<input class="inp" id="stN"></label><label class="f">Emel<input class="inp" id="stE" type="email"></label><label class="f">Kata laluan sementara<input class="inp" id="stP" value="${genPin().toLowerCase()}2026"></label><label class="f">Peranan<select class="inp" id="stR"><option value="guru">Guru</option><option value="admin">Pentadbir</option></select></label><button class="btn pri" id="stAdd">Daftar</button></div>
+    <details><summary class="small">Daftar ramai sekali gus (tampal dari Excel)</summary><p class="small muted">Satu baris setiap guru: <code>NAMA, emel</code>. Kata laluan sementara yang sama digunakan untuk semua; guru boleh tukar melalui "Lupa kata laluan".</p><textarea class="inp" id="stBulk" rows="5" style="width:100%"></textarea><div class="row" style="margin-top:6px"><button class="btn" id="stBulkGo">Daftar semua</button></div></details></div>` : ""}
+  <div class="panel stack"><h3>Pangkalan data</h3>
+    <p style="margin:0">Mod semasa: <b>${S.mode === "firebase" ? "Firebase (" + esc(S.fb.cfg.projectId) + ")" : "Demo (data dalam pelayar ini sahaja)"}</b></p>
+    ${S.mode === "local" ? `<p class="muted small" style="margin:0">Untuk kegunaan sebenar, tampal <b>firebaseConfig</b> daripada Firebase Console → Project settings → Your apps → Web app. Untuk penghosan kekal, letakkan config yang sama dalam pemalar <code>FIREBASE_CONFIG</code> di bahagian atas fail HTML supaya ibu bapa terus tersambung.</p>
+      <textarea class="inp" id="fbT" rows="6" placeholder='{ "apiKey": "...", "authDomain": "...", "projectId": "...", "appId": "..." }'></textarea>
+      <div class="row"><button class="btn pri" id="fbGo">Sambung Firebase</button><button class="btn danger" id="dReset">Set semula data demo</button></div>` :
+      `<div class="row"><button class="btn" id="fbOff">Putuskan config yang disimpan dalam pelayar</button></div>`}
+    <details><summary class="small">Peraturan keselamatan Firestore (salin ke Firebase Console → Firestore → Rules)</summary><pre class="code">${esc(RULES)}</pre></details>
+  </div>`;
+  /* ujian */
+  $$("#nU button").forEach(b => b.onclick = async () => {
+    const n = +b.dataset.n; if (n === c.ujian.length) return;
+    if (n < c.ujian.length) { const rm = c.ujian.slice(n); const has = rm.some(u => c.kelas.some(k => Object.keys(S.markah[mkKey(u.id, k.id)] || {}).length)); if (!(await ask(`Kurangkan kepada ${n} ujian? ${rm.map(u => "<b>" + esc(u.nama) + "</b>").join(", ")} akan dibuang${has ? " bersama markahnya" : ""}.`, "Buang"))) return; c.ujian = c.ujian.slice(0, n); }
+    else { while (c.ujian.length < n) { const i = c.ujian.length + 1; let id = "U" + i; while (c.ujian.some(u => u.id === id)) id += "x"; c.ujian.push({ id, nama: "SUMATIF " + i, kunci: false, terbit: false }); } }
+    await saveCfg(); toast(`Tahun ${S.tahun}: ${n} ujian.`); render();
+  });
+  $$("[data-un]").forEach(i => i.onchange = async () => { c.ujian[+i.dataset.un].nama = i.value.trim().toUpperCase() || c.ujian[+i.dataset.un].nama; await saveCfg(); toast("Nama ujian disimpan."); });
+  $$("[data-uk]").forEach(i => i.onchange = async () => { c.ujian[+i.dataset.uk].kunci = i.checked; await saveCfg(); toast(i.checked ? "Isian dikunci untuk guru." : "Isian dibuka."); });
+  $$("[data-ut]").forEach(i => i.onchange = async () => { c.ujian[+i.dataset.ut].terbit = i.checked; await saveCfg(); toast("Klik Kemas kini portal untuk menghantar perubahan kepada ibu bapa."); });
+  const prevSlip = () => {
+    const u = c.ujian.find(x => x.id === S.sel.ujian) || c.ujian[0]; const k = c.kelas.find(x => muridOf(x.id).length); const box = $("#slipPrev"); if (!box) return;
+    if (!k || !u) { box.innerHTML = `<p class="muted">Tiada murid untuk pratonton.</p>`; return; }
+    const r = hasilDarjah(u.id, k.darjah).find(x => x.kelas.id === k.id);
+    box.innerHTML = slipHTML({ sekolah: c.sekolah, ujianNama: u.nama, tahun: S.tahun, nama: r.m.nama, ic: r.m.ic, kelas: k.nama, guru: k.guru, gb: c.sekolah.gb, k: r.k, kdk: r.kdk, kdkN: r.kdkN, kdt: r.kdt, kdtN: r.kdtN, opt: slipOpt() });
+  };
+  prevSlip();
+  $$("[data-sl]").forEach(i => i.onchange = async () => { c.slip = { ...slipOpt(), [i.dataset.sl]: i.checked }; prevSlip(); await saveCfg(); toast(`${SLIP_ITEMS.find(x => x[0] === i.dataset.sl)[1]}: ${i.checked ? "dipaparkan" : "disembunyikan"}`); });
+  $("#pub").onclick = async () => { $("#pub").disabled = true; $("#pub").textContent = "Menerbitkan…"; try { const n = await publishPortal(); toast(`Portal dikemas kini untuk ${n} murid.`); } catch (e) { toast("Gagal: " + e.message); } render(); };
+  /* sekolah */
+  $("#sSave").onclick = async () => { Object.assign(c.sekolah, { nama: $("#sN").value.trim(), alamat: $("#sA").value.trim(), gb: $("#sG").value.trim(), url: $("#sU").value.trim() }); await saveCfg(); toast("Maklumat sekolah disimpan."); render(); };
+  $("#nYGo").onclick = async () => {
+    const y = $("#nY").value.trim(); if (!/^\d{4}$/.test(y) || S.meta.tahunList.includes(y)) return toast("Tahun tidak sah atau sudah wujud.");
+    if (!(await ask(`Mula tahun <b>${y}</b> dan jadikan tahun aktif? Tetapan tahun ${S.tahun} akan disalin.`, "Mula"))) return;
+    const nc = structuredClone(c); nc.tahun = y; nc.ujian.forEach(u => { u.kunci = false; u.terbit = false; }); delete nc.portalDikemas;
+    await S.db.set("tahun", y, nc); S.meta.tahunList.push(y); S.meta.tahunAktif = y; await saveMeta(); await loadYear(y); toast("Tahun " + y + " dimulakan."); render();
+  };
+  /* kelas */
+  const readKelas = () => c.kelas.forEach((k, i) => { k.nama = $(`[data-kn="${i}"]`).value.trim().toUpperCase(); k.darjah = +$(`[data-kd="${i}"]`).value; k.guru = $(`[data-kg="${i}"]`).value.trim().toUpperCase(); });
+  $("#kAdd").onclick = () => { readKelas(); c.kelas.push({ id: "k" + uid(), nama: "KELAS BAHARU", darjah: 1, guru: "" }); render(); };
+  $("#kSave").onclick = async () => { readKelas(); await saveCfg(); toast("Kelas disimpan."); render(); };
+  $("#kImp").onclick = () => importDialog();
+  $$("[data-kx]").forEach(b => b.onclick = async () => { const k = c.kelas[+b.dataset.kx]; if (muridOf(k.id).length && !(await ask(`Kelas <b>${esc(k.nama)}</b> ada ${muridOf(k.id).length} murid. Padam kelas dan semua murid serta markahnya?`, "Padam"))) return; readKelas(); c.kelas.splice(+b.dataset.kx, 1); delete S.murid[k.id]; await S.db.del("murid", `${S.tahun}_${k.id}`).catch(() => { }); for (const u of c.ujian) { delete S.markah[mkKey(u.id, k.id)]; await S.db.del("markah", `${S.tahun}_${mkKey(u.id, k.id)}`).catch(() => { }); } await saveCfg(); render(); });
+  /* subjek */
+  const readSubj = () => c.subjek.forEach((s, i) => { s.kod = $(`[data-sk="${i}"]`).value.trim().toUpperCase(); s.nama = $(`[data-sn="${i}"]`).value.trim().toUpperCase(); s.darjah = $$(`[data-sd="${i}"]`).filter(x => x.checked).map(x => +x.value); s.pilihan = $(`[data-sp="${i}"]`).checked; });
+  $("#sbAdd").onclick = () => { readSubj(); c.subjek.push({ kod: "BARU", nama: "SUBJEK BAHARU", darjah: [...ALL] }); render(); };
+  $("#sbSave").onclick = async () => { readSubj(); const k = c.subjek.map(s => s.kod); if (new Set(k).size !== k.length) return toast("Kod subjek mesti unik."); await saveCfg(); toast("Subjek disimpan."); render(); };
+  $$("[data-sx]").forEach(b => b.onclick = async () => { const s = c.subjek[+b.dataset.sx]; if (!(await ask(`Padam subjek <b>${esc(s.nama)}</b>? Markah sedia ada tidak dipadam tetapi tidak lagi dipaparkan.`, "Padam"))) return; readSubj(); c.subjek.splice(+b.dataset.sx, 1); await saveCfg(); render(); });
+  /* skala */
+  $("#gSave").onclick = async () => { for (const s of c.skala) { s.min = +$(`[data-gm="${s.g}"]`).value; s.label = $(`[data-gl="${s.g}"]`).value.trim().toUpperCase(); s.lulus = $(`[data-gp="${s.g}"]`).checked; } await saveCfg(); toast("Skala gred disimpan."); render(); };
+  $("#ulSave").onclick = async () => { c.ulasan = $("#ulT").value.split("\n").map(x => x.trim()).filter(Boolean); await saveCfg(); toast("Bank ulasan disimpan."); };
+  /* db */
+  $("#fbGo") && ($("#fbGo").onclick = async () => {
+    const t = $("#fbT").value; let cfg = null;
+    try { cfg = JSON.parse(t); } catch (e) { const o = {}; t.replace(/(\w+)\s*:\s*["']([^"']+)["']/g, (_, k, v) => o[k] = v); if (o.apiKey && o.projectId) cfg = o; }
+    if (!cfg?.apiKey || !cfg?.projectId) return toast("Config tidak lengkap: perlu apiKey dan projectId.");
+    LS.set("emarkah-fbconfig", cfg); toast("Config disimpan. Memuatkan semula…"); setTimeout(() => location.reload(), 700);
+  });
+  $("#fbOff") && ($("#fbOff").onclick = () => { LS.del("emarkah-fbconfig"); toast("Config dibuang. Memuatkan semula…"); setTimeout(() => location.reload(), 700); });
+  $("#dReset") && ($("#dReset").onclick = async () => { if (!(await ask("Padam semua data dalam pelayar ini dan muat semula data contoh?", "Set semula"))) return; LS.keys().filter(k => k && k.startsWith("emarkah:")).forEach(k => LS.del(k)); await seedDemo(); S.meta = await S.db.get("app", "meta"); await loadYear(S.meta.tahunAktif); render(); });
+  if (S.mode === "firebase") loadStaff();
+};
+async function loadStaff() {
+  const box = $("#staffL"); if (!box) return;
+  try {
+    const list = await S.db.list("staff");
+    box.innerHTML = list.length ? `<div class="tw"><table class="t"><thead><tr><th class="l">Nama</th><th class="l">Emel</th><th>Peranan</th><th></th></tr></thead><tbody>${list.map(s => `<tr><td class="l">${esc(s.data.nama)}</td><td class="l">${esc(s.id)}</td><td>${s.data.peranan === "admin" ? "Pentadbir" : "Guru"}</td><td>${s.id !== S.user.emel ? `<button class="btn sm danger" data-sdel="${esc(s.id)}">Buang akses</button>` : ""}</td></tr>`).join("")}</tbody></table></div>` : "Belum ada pengguna berdaftar.";
+    $$("[data-sdel]").forEach(b => b.onclick = async () => { if (!(await ask(`Buang akses ${esc(b.dataset.sdel)}?`, "Buang"))) return; await S.db.del("staff", b.dataset.sdel); loadStaff(); });
+  } catch (e) { box.textContent = "Gagal memuatkan: " + e.message; }
+  const add = async (nama, email, pw, role) => {
+    email = email.trim().toLowerCase();
+    const sec = S.fb.initializeApp(S.fb.cfg, "sec" + Date.now()); const sa = S.fb.getAuth(sec);
+    try { await S.fb.createUserWithEmailAndPassword(sa, email, pw); } catch (e) { if (e.code !== "auth/email-already-in-use") throw e; }
+    finally { try { await S.fb.signOut(sa); await S.fb.deleteApp(sec); } catch (e) { } }
+    await S.db.set("staff", email, { nama: nama.trim().toUpperCase(), peranan: role, emel: email });
+  };
+  $("#stAdd").onclick = async () => { const n = $("#stN").value, e = $("#stE").value, p = $("#stP").value, r = $("#stR").value; if (!n || !e || p.length < 6) return toast("Isi nama, emel dan kata laluan (min 6 aksara)."); try { await add(n, e, p, r); toast("Didaftarkan. Kata laluan sementara: " + p); loadStaff(); } catch (er) { toast("Gagal: " + er.message); } };
+  $("#stBulkGo").onclick = async () => { const p = $("#stP").value; const lines = $("#stBulk").value.split("\n").map(l => l.split(/[,\t]/).map(x => x.trim())).filter(x => x[0] && x[1]); let ok = 0; for (const [n, e] of lines) { try { await add(n, e, p, "guru"); ok++; } catch (er) { console.warn(e, er); } } toast(`${ok}/${lines.length} guru didaftarkan. Kata laluan sementara: ${p}`); loadStaff(); };
+}
+const RULES = `rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function email() { return request.auth.token.email.lower(); }
+    function staffDoc() { return /databases/$(database)/documents/staff/$(email()); }
+    function isStaff() { return request.auth != null && request.auth.token.email != null
+                          && (exists(staffDoc()) || isRootAdmin()); }
+    function isRootAdmin() { return request.auth != null && request.auth.token.email != null
+                          && email() in ['GANTI_DENGAN_EMEL_PENTADBIR@moe-dl.edu.my']; }
+    function isAdmin() { return isRootAdmin() || (isStaff() && get(staffDoc()).data.peranan == 'admin'); }
+
+    match /app/{doc}      { allow read: if true;      allow write: if isAdmin(); }
+    match /tahun/{y}      { allow read: if isStaff(); allow write: if isAdmin(); }
+    match /murid/{id}     { allow read: if isStaff(); allow write: if isAdmin(); }
+    match /markah/{id}    { allow read, write: if isStaff(); }
+    match /portal/{id}    { allow get: if true; allow list: if false; allow write: if isAdmin(); }
+    match /staff/{em}     { allow get: if request.auth != null && (email() == em || isAdmin());
+                            allow list, write: if isAdmin(); }
+  }
+}`;
+
+window.addEventListener("beforeunload", e => { if (S.patch.size) { e.preventDefault(); e.returnValue = ""; } });
+boot();
+</script>
+
+</body>
+</html>
