@@ -12,10 +12,10 @@ Buka `index.html` dalam pelayar. Tanpa Firebase, aplikasi berjalan dalam **mod d
 
 Boleh guna projek sedia ada (`skjb-icthub`) atau projek baharu.
 
-1. **Firebase Console → Authentication → Sign-in method** → hidupkan **Email/Password**.
+1. **Firebase Console → Authentication → Sign-in method** → hidupkan **Google** (log masuk utama guru dengan akaun DELIMa) dan, jika mahu, **Email/Password** (pilihan kedua).
 2. **Firestore Database** → Create database (lokasi `asia-southeast1`).
 3. **Firestore → Rules** → tampal peraturan dari Tetapan → tab Pangkalan data dalam aplikasi (atau bahagian `RULES` dalam fail). Gantikan `GANTI_DENGAN_EMEL_PENTADBIR@moe-dl.edu.my` dengan emel pentadbir utama. Publish.
-4. **Authentication → Users → Add user**: cipta akaun pentadbir utama (emel yang sama seperti di langkah 3). Kali pertama emel ini log masuk, myMarkah merekodkannya sebagai pentadbir secara automatik (emel pentadbir tidak perlu ditulis dalam fail HTML yang awam).
+4. Pentadbir utama terus log masuk dengan butang **Log masuk dengan Google (DELIMa)** menggunakan emel di langkah 3 (tidak perlu Add user). Kali pertama emel ini log masuk, myMarkah merekodkannya sebagai pentadbir secara automatik (emel pentadbir tidak perlu ditulis dalam fail HTML yang awam).
 5. **Project settings → Your apps → Web app** → salin `firebaseConfig`.
 6. Dalam `index.html`, cari baris berikut berhampiran bahagian atas skrip dan isikan:
    ```js
@@ -31,7 +31,7 @@ Tetapan disusun mengikut tab: Ujian & portal, Sekolah & tahun, Kelas, Guru subje
 3. **Tetapan → Kelas / Subjek / Skala gred**: semak. Kelas lalai: Tahun 1–6 × ACHIEVER, BRILLIANT, CHAMPION, DYNAMIC, ENERGETIC (30 kelas); isi nama guru kelas. Import Excel memadankan nama kelas yang sama (cth. "6 ACHIEVER").
 4. **Murid & PIN → Import Excel**: muat naik fail seperti `TAHUN 6.xlsx` (setiap helaian kelas). Murid, kelas dan (jika dipilih) markah ujian akan diimport. Ulang untuk setiap darjah.
 5. **Tetapan → Kelas**: isi nama dan **emel DELIMa guru kelas**. Guru kelas akan nampak menu **Kelas Saya** untuk menetapkan guru subjek kelasnya (pentadbir juga boleh di **Tetapan → Guru subjek**).
-6. **Tetapan → Pengguna**: daftar guru dengan nama, emel DELIMa, peranan dan (jika guru kelas) kelasnya, atau tampal senarai `NAMA, emel, KELAS` dari Excel. Kelas yang dipilih terus dikemas kini di tab Kelas. Beri guru kata laluan sementara; mereka boleh tukar melalui "Lupa kata laluan".
+6. **Tetapan → Pengguna**: daftar guru dengan nama, emel DELIMa, peranan dan (jika guru kelas) kelasnya, atau tampal senarai `NAMA, emel, KELAS` dari Excel. Kelas yang dipilih terus dikemas kini di tab Kelas. Guru log masuk dengan butang Google (DELIMa) tanpa kata laluan; medan kata laluan hanya untuk guru yang tidak boleh guna Google. Pentadbir boleh melantik pentadbir baharu dengan menukar lajur Peranan kepada Pentadbir.
 7. **Murid & PIN → Cetak senarai PIN**: edarkan PIN kepada ibu bapa.
 
 ## 4. Sepanjang tahun

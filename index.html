@@ -212,6 +212,8 @@ pre.code{background:var(--bg);border:1px solid var(--line);border-radius:8px;pad
 .ktabs .km{font-size:11px;color:var(--muted)}
 .ktabs button.on{background:var(--em);border-color:var(--em);color:var(--em-ink)}
 .ktabs button.on .km{color:inherit;opacity:.85}
+.gbtn{justify-content:center;padding:11px 16px;font-size:15px}
+.gbtn .gdot{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--paper);color:var(--em-deep);font-weight:800;font-size:13px}
 .stform{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:10px;align-items:end}
 .settabs{display:flex;gap:6px;flex-wrap:wrap;padding:6px;background:var(--paper);border:1px solid var(--line);border-radius:12px}
 .settabs button{border:0;background:none;border-radius:8px;padding:8px 14px;font-weight:600;color:var(--muted);white-space:nowrap}
@@ -676,7 +678,7 @@ async function staffAfterAuth(email) {
   if (!st) { /* first login of the root admin named in the Firestore rules: rules allow only that email to create its own admin record */
     const rec = { nama: "PENTADBIR", peranan: "admin", emel: email };
     try { await S.db.set("staff", email, rec); st = rec; } catch (e) { } }
-  if (!st) { await S.fb.signOut(S.fb.auth); throw new Error("Akaun ini belum didaftarkan oleh pentadbir dalam myMarkah."); }
+  if (!st) { await S.fb.signOut(S.fb.auth); throw new Error(`Akaun ${email} belum didaftarkan dalam myMarkah. Minta pentadbir mendaftarkan emel DELIMa anda di Tetapan → Pengguna.`); }
   S.user = { ...st, emel: email };
   if (st.peranan === "admin") S.db.list("staff").then(l => S.staffNames = l.map(x => x.data.nama)).catch(() => { });
   S.meta = await S.db.get("app", "meta") || { tahunAktif: String(new Date().getFullYear()), tahunList: [String(new Date().getFullYear())] };
@@ -714,12 +716,17 @@ function renderLogin(err) {
           <button class="btn pri" id="dAdmin">Masuk sebagai Pentadbir (demo)</button>
           <button class="btn" id="dGuru">Masuk sebagai Guru (demo)</button>
         </div>` : `
-        <form id="fStaff" class="stack" style="gap:12px">
-          <label class="f">Emel (DELIMa)<input class="inp" id="lgEmail" type="email" autocomplete="username" required></label>
-          <label class="f">Kata laluan<input class="inp" id="lgPw" type="password" autocomplete="current-password" required></label>
-          <button class="btn pri" type="submit">Log masuk</button>
-          <button class="btn sm" type="button" id="lgReset" style="justify-self:start">Lupa kata laluan</button>
-        </form>`) : `
+        <div class="stack" style="gap:12px">
+          <button class="btn pri gbtn" type="button" id="lgGoogle"><span class="gdot" aria-hidden="true">G</span>Log masuk dengan Google (DELIMa)</button>
+          <p class="muted small" style="margin:0">Pilih akaun DELIMa anda (@moe-dl.edu.my). Tiada kata laluan baharu diperlukan. Hanya guru yang didaftarkan oleh pentadbir boleh masuk.</p>
+          <details><summary class="small">Log masuk dengan emel &amp; kata laluan</summary>
+          <form id="fStaff" class="stack" style="gap:12px;margin-top:10px">
+            <label class="f">Emel (DELIMa)<input class="inp" id="lgEmail" type="email" autocomplete="username" required></label>
+            <label class="f">Kata laluan<input class="inp" id="lgPw" type="password" autocomplete="current-password" required></label>
+            <button class="btn" type="submit">Log masuk</button>
+            <button class="btn sm" type="button" id="lgReset" style="justify-self:start">Lupa kata laluan</button>
+          </form></details>
+        </div>`) : `
         <form id="fParent" class="stack" style="gap:12px">
           <p class="muted small" style="margin:0">Masukkan No. MyKid / Kad Pengenalan anak dan PIN semakan yang diberi oleh sekolah.</p>
           <label class="f">No. MyKid / KP murid<input class="inp" id="pIc" inputmode="numeric" placeholder="cth: 140510139001" required></label>
@@ -734,6 +741,17 @@ function renderLogin(err) {
     $("#dAdmin").onclick = () => demoLogin("admin");
     $("#dGuru").onclick = () => demoLogin("guru");
   }
+  if ($("#lgGoogle")) $("#lgGoogle").onclick = async () => {
+    const pr = new S.fb.GoogleAuthProvider(); pr.setCustomParameters({ hd: "moe-dl.edu.my", prompt: "select_account" });
+    try { await S.fb.signInWithPopup(S.fb.auth, pr); }
+    catch (e) {
+      if (["auth/popup-blocked", "auth/operation-not-supported-in-this-environment"].includes(e.code)) return S.fb.signInWithRedirect(S.fb.auth, pr);
+      if (["auth/popup-closed-by-user", "auth/cancelled-popup-request"].includes(e.code)) return;
+      renderLogin(e.code === "auth/operation-not-allowed" ? "Log masuk Google belum dihidupkan. Pentadbir perlu hidupkan Google di Firebase → Authentication → Sign-in method."
+        : e.code === "auth/unauthorized-domain" ? "Alamat laman ini belum dibenarkan. Pentadbir perlu tambah domain di Firebase → Authentication → Settings → Authorized domains."
+        : "Log masuk Google gagal: " + e.message);
+    }
+  };
   if ($("#fStaff")) {
     $("#fStaff").onsubmit = async e => {
       e.preventDefault();
@@ -1617,12 +1635,12 @@ VIEWS.tetapan = el => {
     <div class="stform">
       <label class="f">Nama guru<input class="inp" id="stN" placeholder="cth: SITI AMINAH BINTI ALI" style="text-transform:uppercase"></label>
       <label class="f">Emel DELIMa<input class="inp" id="stE" type="email" placeholder="nama@moe-dl.edu.my"></label>
-      ${S.mode === "firebase" ? `<label class="f">Kata laluan sementara<input class="inp" id="stP" value="${genPin().toLowerCase()}2026"></label>` : ""}
+      ${S.mode === "firebase" ? `<label class="f">Kata laluan (pilihan)<input class="inp" id="stP" placeholder="Kosongkan jika guna Google"></label>` : ""}
       <label class="f">Peranan<select class="inp" id="stR"><option value="guru">Guru</option><option value="admin">Pentadbir</option></select></label>
       <label class="f">Guru kelas bagi<select class="inp" id="stK"><option value="">— Bukan guru kelas —</option>${c.kelas.slice().sort((a, b) => a.darjah - b.darjah || a.nama.localeCompare(b.nama)).map(k => `<option value="${k.id}">${esc(k.nama)}${k.guruEmel ? " (ada: " + esc(k.guru || k.guruEmel) + ")" : ""}</option>`).join("")}</select></label>
       <button class="btn pri" id="stAdd">Daftar guru</button>
     </div>
-    <details><summary class="small">Daftar ramai sekali gus (tampal dari Excel)</summary><p class="small muted">Satu baris setiap guru: <code>NAMA, emel, KELAS</code>. Lajur KELAS pilihan (cth. <code>6 ACHIEVER</code>) untuk guru kelas. ${S.mode === "firebase" ? "Kata laluan sementara yang sama digunakan untuk semua; guru boleh tukar melalui \"Lupa kata laluan\"." : ""}</p><textarea class="inp" id="stBulk" rows="5" style="width:100%" placeholder="SITI AMINAH BINTI ALI, siti.aminah@moe-dl.edu.my, 6 ACHIEVER&#10;LEE MEI LING, mei.ling@moe-dl.edu.my"></textarea><div class="row" style="margin-top:6px"><button class="btn" id="stBulkGo">Daftar semua</button></div></details>
+    <details><summary class="small">Daftar ramai sekali gus (tampal dari Excel)</summary><p class="small muted">Satu baris setiap guru: <code>NAMA, emel, KELAS</code>. Lajur KELAS pilihan (cth. <code>6 ACHIEVER</code>) untuk guru kelas. Guru log masuk dengan butang Google (DELIMa); kata laluan tidak diperlukan.</p><textarea class="inp" id="stBulk" rows="5" style="width:100%" placeholder="SITI AMINAH BINTI ALI, siti.aminah@moe-dl.edu.my, 6 ACHIEVER&#10;LEE MEI LING, mei.ling@moe-dl.edu.my"></textarea><div class="row" style="margin-top:6px"><button class="btn" id="stBulkGo">Daftar semua</button></div></details>
     <div id="staffL" class="muted">Memuatkan…</div>
   </div>
   <div class="panel stack" data-st="data"><h3>Pangkalan data</h3>
@@ -1711,14 +1729,21 @@ async function loadStaff() {
   try {
     const list = (await S.db.list("staff")).sort((a, b) => (a.data.nama || "").localeCompare(b.data.nama || ""));
     box.classList.remove("muted");
-    box.innerHTML = list.length ? `<div class="eyebrow" style="margin-bottom:6px">${list.length} pengguna berdaftar</div><div class="tw"><table class="t"><thead><tr><th>No</th><th class="l">Nama</th><th class="l">Emel DELIMa</th><th>Peranan</th><th class="l">Guru kelas</th><th></th></tr></thead><tbody>${list.map((s, i) => `<tr><td>${i + 1}</td><td class="l">${esc(s.data.nama)}</td><td class="l">${esc(s.id)}</td><td>${s.data.peranan === "admin" ? `<span class="pill mid">Pentadbir</span>` : "Guru"}</td><td class="l">${esc(kelasGuru(s.id).join(", ")) || `<span class="muted">–</span>`}</td><td>${s.id !== S.user.emel ? `<button class="btn sm danger" data-sdel="${esc(s.id)}">Buang akses</button>` : `<span class="muted small">anda</span>`}</td></tr>`).join("")}</tbody></table></div>` : `<p class="muted" style="margin:0">Belum ada guru berdaftar. Isi borang di atas atau tampal senarai dari Excel.</p>`;
+    box.innerHTML = list.length ? `<div class="eyebrow" style="margin-bottom:6px">${list.length} pengguna berdaftar</div><div class="tw"><table class="t"><thead><tr><th>No</th><th class="l">Nama</th><th class="l">Emel DELIMa</th><th>Peranan</th><th class="l">Guru kelas</th><th></th></tr></thead><tbody>${list.map((s, i) => `<tr><td>${i + 1}</td><td class="l">${esc(s.data.nama)}</td><td class="l">${esc(s.id)}</td><td>${s.id === S.user.emel ? `<span class="pill mid">Pentadbir</span>` : `<select class="inp" data-srole="${esc(s.id)}" aria-label="Peranan ${esc(s.data.nama)}" style="padding:4px 8px"><option value="guru" ${s.data.peranan !== "admin" ? "selected" : ""}>Guru</option><option value="admin" ${s.data.peranan === "admin" ? "selected" : ""}>Pentadbir</option></select>`}</td><td class="l">${esc(kelasGuru(s.id).join(", ")) || `<span class="muted">–</span>`}</td><td>${s.id !== S.user.emel ? `<button class="btn sm danger" data-sdel="${esc(s.id)}">Buang akses</button>` : `<span class="muted small">anda</span>`}</td></tr>`).join("")}</tbody></table></div>` : `<p class="muted" style="margin:0">Belum ada guru berdaftar. Isi borang di atas atau tampal senarai dari Excel.</p>`;
+    $$("[data-srole]").forEach(sel => sel.onchange = async () => {
+      const id = sel.dataset.srole, rec = list.find(x => x.id === id).data, to = sel.value;
+      const ok = await ask(to === "admin" ? `Lantik <b>${esc(rec.nama)}</b> sebagai <b>pentadbir</b>? Pentadbir boleh mengubah semua tetapan, murid, PIN dan pengguna.` : `Tukar <b>${esc(rec.nama)}</b> kepada <b>guru</b>? Akses pentadbir akan dibuang.`, to === "admin" ? "Lantik pentadbir" : "Tukar kepada guru");
+      if (!ok) { sel.value = rec.peranan === "admin" ? "admin" : "guru"; return; }
+      try { await S.db.set("staff", id, { ...rec, peranan: to }); toast(to === "admin" ? `${rec.nama} kini pentadbir.` : `${rec.nama} kini guru.`); loadStaff(); }
+      catch (e) { toast("Gagal: " + e.message); sel.value = rec.peranan; }
+    });
     $$("[data-sdel]").forEach(b => b.onclick = async () => { if (!(await ask(`Buang akses <b>${esc(b.dataset.sdel)}</b>? Guru ini tidak lagi boleh log masuk ke myMarkah.`, "Buang"))) return; await S.db.del("staff", b.dataset.sdel); toast("Akses dibuang."); loadStaff(); });
   } catch (e) { box.textContent = "Gagal memuatkan: " + e.message; }
   const pw = () => $("#stP") ? $("#stP").value : "";
   const add = async (nama, email, role, kelasId) => {
     email = email.trim().toLowerCase(); nama = nama.trim().toUpperCase();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new Error("Emel tidak sah: " + email);
-    if (S.mode === "firebase") {
+    if (S.mode === "firebase" && pw()) { /* optional password account; Google sign-in needs no account creation */
       const sec = S.fb.initializeApp(S.fb.cfg, "sec" + Date.now()); const sa = S.fb.getAuth(sec);
       try { await S.fb.createUserWithEmailAndPassword(sa, email, pw()); } catch (e) { if (e.code !== "auth/email-already-in-use") throw e; }
       finally { try { await S.fb.signOut(sa); await S.fb.deleteApp(sec); } catch (e) { } }
@@ -1731,12 +1756,12 @@ async function loadStaff() {
   $("#stAdd").onclick = async () => {
     const n = $("#stN").value, e = $("#stE").value, r = $("#stR").value, k = $("#stK").value;
     if (!n.trim() || !e.trim()) return toast("Isi nama dan emel DELIMa guru.");
-    if (S.mode === "firebase" && pw().length < 6) return toast("Kata laluan sementara mesti sekurang-kurangnya 6 aksara.");
-    try { const kid = await add(n, e, r, k); await after(kid ? [kid] : []); toast(`${n.toUpperCase()} didaftarkan${kid ? " sebagai guru kelas " + kelasById(kid).nama : ""}.${S.mode === "firebase" ? " Kata laluan sementara: " + pw() : ""}`); render(); }
+    if (pw() && pw().length < 6) return toast("Kata laluan mesti sekurang-kurangnya 6 aksara, atau kosongkan untuk guna Google sahaja.");
+    try { const kid = await add(n, e, r, k); await after(kid ? [kid] : []); toast(`${n.toUpperCase()} didaftarkan${kid ? " sebagai guru kelas " + kelasById(kid).nama : ""}.${pw() ? " Kata laluan: " + pw() : " Guru boleh log masuk dengan butang Google."}`); render(); }
     catch (er) { toast("Gagal: " + er.message); }
   };
   $("#stBulkGo").onclick = async () => {
-    if (S.mode === "firebase" && pw().length < 6) return toast("Kata laluan sementara mesti sekurang-kurangnya 6 aksara.");
+    if (pw() && pw().length < 6) return toast("Kata laluan mesti sekurang-kurangnya 6 aksara, atau kosongkan untuk guna Google sahaja.");
     const lines = $("#stBulk").value.split("\n").map(l => l.split(/[,\t;]/).map(x => x.trim())).filter(x => x[0] && x[1]);
     let ok = 0; const gagal = [], touched = [];
     for (const [n, e, kn] of lines) {
@@ -1747,7 +1772,7 @@ async function loadStaff() {
     await after(touched);
     S.sel.setTab = "pengguna"; render();
     if (gagal.length) modal(`<h3>${ok}/${lines.length} guru didaftarkan</h3><p class="small" style="margin:0">Tidak berjaya:</p><ul class="small">${gagal.map(x => `<li>${esc(x)}</li>`).join("")}</ul><div class="row" style="justify-content:flex-end"><button class="btn pri" data-close>Tutup</button></div>`);
-    else toast(`${ok} guru didaftarkan${touched.length ? `, ${touched.length} sebagai guru kelas` : ""}.${S.mode === "firebase" ? " Kata laluan sementara: " + pw() : ""}`);
+    else toast(`${ok} guru didaftarkan${touched.length ? `, ${touched.length} sebagai guru kelas` : ""}.${pw() ? " Kata laluan: " + pw() : ""}`);
   };
 }
 const RULES = `rules_version = '2';
