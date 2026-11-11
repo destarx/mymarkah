@@ -30,7 +30,7 @@ Tetapan disusun mengikut tab: Ujian & portal, Sekolah & tahun, Kelas, Guru subje
 2. **Tetapan → Ujian**: pilih bilangan ujian tahun ini (2 atau 3) dan namakan (cth. SUMATIF 1, SUMATIF 2, SUMATIF 3).
 3. **Tetapan → Kelas / Subjek / Skala gred**: semak. Kelas lalai: Tahun 1–6 × ACHIEVER, BRILLIANT, CHAMPION, DYNAMIC, ENERGETIC (30 kelas); isi nama guru kelas. Import Excel memadankan nama kelas yang sama (cth. "6 ACHIEVER").
 4. **Murid & PIN → Import Excel**: guna fail CSV dengan lajur `NO IC, NAMA, KELAS` (lihat `contoh_murid_mymarkah.csv`), atau muat naik fail seperti `TAHUN 6.xlsx` (setiap helaian kelas). Murid, kelas dan (jika dipilih) markah ujian akan diimport. Ulang untuk setiap darjah.
-5. **Tetapan → Kelas**: isi nama dan **emel DELIMa guru kelas**. Guru kelas akan nampak menu **Kelas Saya** untuk menetapkan guru subjek kelasnya (pentadbir juga boleh di **Tetapan → Guru subjek**).
+5. **Tetapan → Kelas**: pilih **guru kelas** dan **pembantu guru kelas** daripada senarai pengguna berdaftar. Kedua-duanya mendapat menu **Kelas Saya** (tetapkan guru subjek) dan boleh mengisi ulasan & kehadiran kelas itu.
 6. **Tetapan → Pengguna** → **Import CSV guru** dengan lajur `NAMA, EMEL, PERANAN, KELAS` (lihat `contoh_guru_mymarkah.csv`; PERANAN = GURU atau PENTADBIR), atau daftar guru dengan nama, emel DELIMa, peranan dan (jika guru kelas) kelasnya, atau tampal senarai `NAMA, emel, KELAS` dari Excel. Kelas yang dipilih terus dikemas kini di tab Kelas. Guru log masuk dengan butang Google (DELIMa) tanpa kata laluan; medan kata laluan hanya untuk guru yang tidak boleh guna Google. Pentadbir boleh melantik pentadbir baharu dengan menukar lajur Peranan kepada Pentadbir.
 7. **PIN ibu bapa**: secara lalai PIN ialah **4 digit akhir No. MyKid** murid (boleh ditukar kepada PIN rawak 6 aksara di Tetapan → Ujian & portal). Edarkan melalui **Murid & PIN → Cetak senarai PIN**.
 
@@ -45,6 +45,9 @@ Tetapan disusun mengikut tab: Ujian & portal, Sekolah & tahun, Kelas, Guru subje
 - Pentadbir: **Kunci** ujian apabila isian tamat, kemudian tandakan **Terbit** dan klik **Kemas kini portal ibu bapa**.
 - Ibu bapa: log masuk dengan No. MyKid + PIN; boleh tambah lebih daripada seorang anak dan lihat semua ujian yang diterbitkan serta graf perkembangan.
 - Tahun baharu: **Tetapan → Tahun akademik → Mula tahun baharu**. Data tahun lepas kekal.
+
+## Muat turun untuk simpanan
+Menu **Muat Turun**: pilih satu kelas, satu darjah atau seluruh sekolah (pentadbir), dan ujian. **Excel** mengandungi satu helaian bagi setiap kelas & ujian serta helaian analisis; **PDF** (A4 melintang) mengandungi senarai markah dan analisis subjek setiap kelas.
 
 ## Peraturan pengiraan (sama seperti Excel TAHUN 6)
 - Gred: A 82–100, B 66–81, C 50–65, D 35–49, E 20–34, F 0–19, TH = tidak hadir (boleh diubah di Tetapan).

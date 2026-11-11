@@ -659,6 +659,7 @@ async function seedDemo() {
   }
   const GS = { BM: "CIKGU AZLINA (DEMO)", BI: "CIKGU JENNY ANAK LAING (DEMO)", MT: "CIKGU FARID HAKIMI (DEMO)", SN: "CIKGU MEI LING (DEMO)", SEJ: "CIKGU NURUL AIN (DEMO)", PMZ: "CIKGU DAVID LAWAI (DEMO)" };
   cfg.kelas.find(k => k.id === "k6a").guruEmel = "demo-guru";
+  Object.assign(cfg.kelas.find(k => k.id === "k6b"), { pembantuEmel: "demo-guru", pembantu: cfg.kelas.find(k => k.id === "k6a").guru });
   const GE = {}; for (const kod in GS) { GE[kod] = "demo-" + kod.toLowerCase(); await db.set("staff", GE[kod], { nama: GS[kod], peranan: "guru", emel: GE[kod] }); }
   await db.set("staff", "demo-guru", { nama: cfg.kelas.find(k => k.id === "k6a").guru, peranan: "guru", emel: "demo-guru" });
   await db.set("staff", "demo", { nama: "PENTADBIR (DEMO)", peranan: "admin", emel: "demo" });
@@ -666,7 +667,7 @@ async function seedDemo() {
   const au = {}; for (const u in mk) for (const k of cfg.kelas) { const a = au[u + "_" + k.id] = {}; const t = new Date(Date.now() - (u === "U1" ? 60 : 3) * 864e5 - Math.floor(rnd() * 864e5)).toISOString();
     for (const s of cfg.subjek.filter(s => s.darjah.includes(k.darjah))) if (Object.values(mk[u][k.id]).some(r => r.m[s.kod] != null)) a[s.kod] = { nama: GS[s.kod] || k.guru, emel: "demo", masa: t };
     a._ulasan = { nama: k.guru, emel: "demo", masa: t }; }
-  await db.set("app", "meta", { tahunAktif: y, tahunList: [y], demo: true, seedVer: 7 });
+  await db.set("app", "meta", { tahunAktif: y, tahunList: [y], demo: true, seedVer: 8 });
   await db.set("tahun", y, cfg);
   for (const k in murid) await db.set("murid", `${y}_${k}`, { senarai: murid[k] });
   for (const u in mk) for (const k in mk[u]) await db.set("markah", `${y}_${u}_${k}`, { data: mk[u][k], audit: au[u + "_" + k] || {} });
@@ -680,7 +681,7 @@ async function boot() {
     try { S.fb = await loadFirebase(cfg); S.db = new FireDB(S.fb); S.mode = "firebase"; }
     catch (e) { console.error(e); S.mode = "local"; S.db = new LocalDB(); S.fbErr = e.message; }
   } else { S.mode = "local"; S.db = new LocalDB(); }
-  if (S.mode === "local") { const mt = await S.db.get("app", "meta"); if (!mt || (mt.demo && mt.seedVer !== 7)) { LS.keys().filter(k => k && k.startsWith("emarkah:")).forEach(k => LS.del(k)); await seedDemo(); } }
+  if (S.mode === "local") { const mt = await S.db.get("app", "meta"); if (!mt || (mt.demo && mt.seedVer !== 8)) { LS.keys().filter(k => k && k.startsWith("emarkah:")).forEach(k => LS.del(k)); await seedDemo(); } }
   if (S.mode === "firebase") {
     S.fb.onAuthStateChanged(S.fb.auth, async u => {
       if (u && !S.user && u.email) { try { await staffAfterAuth(u.email); } catch (e) { renderLogin(e.message); } }
@@ -799,7 +800,7 @@ async function logout() {
 /* ---------------- shell ---------------- */
 const NAV = [
   ["utama", "Utama", "◆"], ["isi", "Isi Markah", "✎"], ["analisis", "Analisis", "▤"], ["graf", "Graf Analisis", "▥"],
-  ["slip", "Slip Keputusan", "▭"], ["murid", "Murid & PIN", "☰"], ["kelassaya", "Kelas Saya", "★", "gk"], ["semakan", "Semakan", "✓", true], ["tetapan", "Tetapan", "⚙", true]
+  ["slip", "Slip Keputusan", "▭"], ["murid", "Murid & PIN", "☰"], ["kelassaya", "Kelas Saya", "★", "gk"], ["muatturun", "Muat Turun", "⇩"], ["semakan", "Semakan", "✓", true], ["tetapan", "Tetapan", "⚙", true]
 ];
 function render() {
   if (!S.user) return renderLogin();
@@ -914,7 +915,7 @@ function isiPicker(el) {
   const c = S.cfg; const u = c.ujian.find(x => x.id === S.sel.ujian) || c.ujian[0]; S.sel.ujian = u.id;
   el.innerHTML = `<div class="head"><div><div class="eyebrow">Isi markah · Tahun akademik ${S.tahun}</div><h2>Pilih darjah</h2></div></div>
   ${exTabs("iTabs")}
-  ${!isAdmin() ? (() => { const t = tugasanSaya(); const gk = myKelas(); return `<div class="panel"><h3>Tugasan isian anda</h3>${t.length || gk.length ? `<div class="tugas">${t.map(({ k, s }) => { const p = isiKiraan(u.id, k, s.kod); return `<button class="tg" data-tk="${k.id}" data-ts="${esc(s.kod)}"><b>${esc(k.nama)} · ${esc(s.kod)}</b><span>${esc(s.nama)}</span><span class="${p.done === p.need && p.need ? "ok" : ""}">${p.done}/${p.need} murid diisi</span></button>`; }).join("")}${gk.map(k => `<button class="tg" data-tk="${k.id}" data-tu="1"><b>${esc(k.nama)} · Ulasan</b><span>Ulasan &amp; kehadiran (guru kelas)</span><span>&nbsp;</span></button>`).join("")}</div>` : `<p class="muted" style="margin:0">Anda belum ditetapkan sebagai guru subjek bagi mana-mana kelas. Minta guru kelas (menu Kelas Saya) atau pentadbir menetapkannya. Anda masih boleh melihat markah semua kelas.</p>`}</div>`; })() : ""}
+  ${!isAdmin() ? (() => { const t = tugasanSaya(); const gk = myKelas(); return `<div class="panel"><h3>Tugasan isian anda</h3>${t.length || gk.length ? `<div class="tugas">${t.map(({ k, s }) => { const p = isiKiraan(u.id, k, s.kod); return `<button class="tg" data-tk="${k.id}" data-ts="${esc(s.kod)}"><b>${esc(k.nama)} · ${esc(s.kod)}</b><span>${esc(s.nama)}</span><span class="${p.done === p.need && p.need ? "ok" : ""}">${p.done}/${p.need} murid diisi</span></button>`; }).join("")}${gk.map(k => `<button class="tg" data-tk="${k.id}" data-tu="1"><b>${esc(k.nama)} · Ulasan</b><span>Ulasan &amp; kehadiran (${String(k.pembantuEmel || "").toLowerCase() === myEmel() ? "pembantu guru kelas" : "guru kelas"})</span><span>&nbsp;</span></button>`).join("")}</div>` : `<p class="muted" style="margin:0">Anda belum ditetapkan sebagai guru subjek bagi mana-mana kelas. Minta guru kelas (menu Kelas Saya) atau pentadbir menetapkannya. Anda masih boleh melihat markah semua kelas.</p>`}</div>`; })() : ""}
   <div class="dgrid">${ALL.map(d => {
     const kls = kelasOfDarjah(d).slice().sort((a, b) => a.nama.localeCompare(b.nama)); const nm = kls.reduce((a, k) => a + muridOf(k.id).length, 0);
     let need = 0, done = 0; kls.forEach(k => { const p = isiKiraan(u.id, k); need += p.need; done += p.done; });
@@ -960,7 +961,7 @@ VIEWS.isi = el => {
   ${u.kunci ? `<div class="banner lock">${esc(u.nama)} telah dikunci oleh pentadbir. ${isAdmin() ? "Anda masih boleh mengubah kerana anda pentadbir." : "Markah hanya boleh dilihat."}</div>` : ""}
   ${!locked && mod === "subjek" && s && roS(s.kod) ? `<div class="banner ro">Paparan sahaja. Hanya guru subjek ${esc(s.kod)} bagi ${esc(k.nama)} (<b>${esc(guruSubjek(k.id, s.kod) || "belum ditetapkan")}</b>) atau pentadbir boleh mengisi markah ini.${guruSubjek(k.id, s.kod) ? "" : " Minta guru kelas atau pentadbir menetapkan guru subjek."}</div>` : ""}
   ${!locked && mod === "semua" && !isAdmin() ? `<div class="banner ro">${milik.length ? `Anda boleh mengisi: <b>${milik.map(x => esc(x.kod)).join(", ")}</b>. Lajur lain paparan sahaja.` : "Anda bukan guru subjek bagi kelas ini. Semua markah paparan sahaja."}</div>` : ""}
-  ${!locked && mod === "ulasan" && roU ? `<div class="banner ro">Paparan sahaja. Hanya guru kelas ${esc(k.nama)} (<b>${esc(k.guru || "–")}</b>) atau pentadbir boleh mengisi ulasan dan kehadiran.</div>` : ""}
+  ${!locked && mod === "ulasan" && roU ? `<div class="banner ro">Paparan sahaja. Hanya guru kelas ${esc(k.nama)} (<b>${esc(k.guru || "–")}</b>)${k.pembantu ? `, pembantu guru kelas (<b>${esc(k.pembantu)}</b>)` : ""} atau pentadbir boleh mengisi ulasan dan kehadiran.</div>` : ""}
   ${mod === "subjek" && s ? `<div class="auditbar"><div><span class="eyebrow">${esc(s.nama)} · ${esc(u.nama)}</span><div data-audit="${key}|${s.kod}">${auditTxt(key, s.kod)}</div></div><div class="small">Guru subjek: <b>${esc(guruSubjek(k.id, s.kod) || "belum ditetapkan")}</b></div></div>` : ""}
   ${mod === "ulasan" ? `<div class="auditbar"><div><span class="eyebrow">Ulasan &amp; kehadiran · ${esc(u.nama)}</span><div data-audit="${key}|_ulasan">${auditTxt(key, "_ulasan")}</div></div><div class="small">Guru kelas: <b>${esc(k.guru || "–")}</b></div></div>` : ""}
   <div class="muted small">Taip markah 0–100, atau <b>TH</b> untuk tidak hadir. Kosongkan jika murid tidak mengambil subjek itu. Enter turun ke murid seterusnya. Tekan <b>Simpan markah</b> (atau Ctrl+S) selepas selesai.</div>`;
@@ -1283,11 +1284,12 @@ function semakanCell(u, x) {
 /* ---------------- GURU SUBJEK (admin + guru kelas) ----------------
    Stored per class in guruSubjek/{tahun}_{kelasId} = { map:{BM:"NAMA"}, guruKelasEmel, oleh, masa }.
    Admin can edit every class; a class teacher (kelas.guruEmel = their login email) can edit their own. */
-const myKelas = () => S.cfg.kelas.filter(k => k.guruEmel && S.user?.emel && k.guruEmel.toLowerCase() === String(S.user.emel).toLowerCase());
+/* class teacher and assistant class teacher (pembantu) have the same rights for their class */
+const myKelas = () => { const me = String(S.user?.emel || "").toLowerCase(); return me ? S.cfg.kelas.filter(k => [k.guruEmel, k.pembantuEmel].some(x => x && x.toLowerCase() === me)) : []; };
 const bolehUbahGS = k => isAdmin() || myKelas().some(x => x.id === k.id);
 async function saveGS(kid) {
   const k = kelasById(kid); if (!k) return;
-  await S.db.set("guruSubjek", `${S.tahun}_${kid}`, { map: S.gs[kid] || {}, guruKelasEmel: (k.guruEmel || "").toLowerCase(), oleh: S.user?.nama || "", masa: new Date().toISOString() });
+  await S.db.set("guruSubjek", `${S.tahun}_${kid}`, { map: S.gs[kid] || {}, guruKelasEmel: (k.guruEmel || "").toLowerCase(), pembantuEmel: (k.pembantuEmel || "").toLowerCase(), oleh: S.user?.nama || "", masa: new Date().toISOString() });
   S.gsMeta[kid] = { oleh: S.user?.nama || "", masa: new Date().toISOString() };
 }
 function namaGuruSemua() {
@@ -1309,7 +1311,7 @@ function gsEditor(box, list, st) {
   box.innerHTML = `
     ${ds.length > 1 ? `<div class="toolbar"><label class="f">Darjah<select class="inp" id="gsD">${ds.map(d => `<option value="${d}" ${d === +st.darjah ? "selected" : ""}>Tahun ${d}</option>`).join("")}</select></label></div>` : ""}
     ${kls.length > 1 ? `<div class="ktabs" id="gsK">${kls.map(x => { const n = subjOf(x.darjah).filter(s => (S.gs[x.id] || {})[s.kod]).length; return `<button class="${x.id === k.id ? "on" : ""}" data-k="${x.id}"><span class="kn">${esc(pendekKelas(x.nama))}</span><span class="km">${n}/${subjOf(x.darjah).length} guru ditetapkan</span></button>`; }).join("")}</div>` : ""}
-    <div class="auditbar"><div><span class="eyebrow">${esc(k.nama)}</span><div>Guru kelas: <b>${esc(k.guru || "–")}</b></div></div><div class="small muted">${meta?.masa ? `Senarai dikemas kini oleh ${esc(meta.oleh)} · ${esc(fmtMasa(meta.masa))}` : "Senarai guru subjek belum pernah disimpan"}</div></div>
+    <div class="auditbar"><div><span class="eyebrow">${esc(k.nama)}</span><div>Guru kelas: <b>${esc(k.guru || "–")}</b>${k.pembantu ? ` · Pembantu: <b>${esc(k.pembantu)}</b>` : ""}</div></div><div class="small muted">${meta?.masa ? `Senarai dikemas kini oleh ${esc(meta.oleh)} · ${esc(fmtMasa(meta.masa))}` : "Senarai guru subjek belum pernah disimpan"}</div></div>
     ${staf.length ? "" : `<div class="banner">Belum ada guru berdaftar. Pentadbir perlu mendaftar guru di Tetapan → Pengguna dahulu.</div>`}
     <div class="tw"><table class="t"><thead><tr><th class="l">Kod</th><th class="l">Subjek</th><th class="l">Guru subjek</th><th>Isian ${esc(u?.nama || "")}</th><th class="l">Kemas kini markah terakhir</th></tr></thead><tbody>
       ${subj.map(s => { const p = u ? isiKiraan(u.id, k, s.kod) : { done: 0, need: 0 }; const a = u ? (S.audit[mkKey(u.id, k.id)] || {})[s.kod] : null;
@@ -1317,7 +1319,7 @@ function gsEditor(box, list, st) {
         <td class="l">${pilihGuru(s.kod, map[s.kod])}</td>
         <td class="num">${p.need ? `${p.done}/${p.need}` : "–"}</td><td class="l small">${a ? `${esc(a.nama)} · ${esc(fmtMasa(a.masa))}` : `<span class="muted">–</span>`}</td></tr>`; }).join("")}
     </tbody></table></div>
-    ${boleh ? `<div class="savebar" id="gsBar"><span id="gsSt" class="save-st">Tiada perubahan.</span><span class="grow"></span><button class="btn" id="gsKelasGuru" title="Isi semua subjek kosong dengan nama guru kelas">Isi kosong dengan guru kelas</button><button class="btn pri" id="gsSave" disabled>Simpan guru subjek</button></div>` : `<p class="muted small">Hanya pentadbir atau guru kelas ${esc(k.nama)} boleh mengubah senarai ini.</p>`}`;
+    ${boleh ? `<div class="savebar" id="gsBar"><span id="gsSt" class="save-st">Tiada perubahan.</span><span class="grow"></span><button class="btn" id="gsKelasGuru" title="Isi semua subjek kosong dengan nama guru kelas">Isi kosong dengan guru kelas</button><button class="btn pri" id="gsSave" disabled>Simpan guru subjek</button></div>` : `<p class="muted small">Hanya pentadbir, guru kelas atau pembantu guru kelas ${esc(k.nama)} boleh mengubah senarai ini.</p>`}`;
   const rerender = () => gsEditor(box, list, st);
   let dirty = false;
   const markGS = () => { dirty = true; $("#gsSave", box).disabled = false; $("#gsBar", box).classList.add("dirty"); $("#gsSt", box).textContent = "Ada perubahan belum disimpan."; };
@@ -1337,10 +1339,127 @@ VIEWS.kelassaya = el => {
   const ks = myKelas();
   if (!ks.length) { el.innerHTML = emptyState("Anda belum ditetapkan sebagai guru kelas.", `<p class="muted" style="margin:0">Pentadbir boleh menetapkan emel anda sebagai guru kelas di Tetapan → Kelas.</p>`); return; }
   S.sel.gsSaya = S.sel.gsSaya || {};
-  el.innerHTML = `<div class="head"><div><div class="eyebrow">Kelas saya · Guru kelas</div><h2>${ks.map(k => esc(k.nama)).join(", ")}</h2></div></div>
+  el.innerHTML = `<div class="head"><div><div class="eyebrow">Kelas saya · Guru kelas / pembantu</div><h2>${ks.map(k => esc(k.nama)).join(", ")}</h2></div></div>
     <p class="muted small" style="margin:0">Tetapkan guru subjek bagi kelas anda daripada senarai guru berdaftar. <b>Hanya guru subjek yang ditetapkan</b> (dan pentadbir) boleh mengisi markah subjek itu bagi kelas ini; guru lain hanya boleh melihat.</p>
     <div id="gsBox" class="stack"></div>`;
   gsEditor($("#gsBox"), ks, S.sel.gsSaya);
+};
+
+/* ---------------- MUAT TURUN (Excel & PDF untuk simpanan) ---------------- */
+function loadScript(src) { return new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = () => rej(new Error("Gagal memuatkan " + src)); document.head.appendChild(s); }); }
+async function getJsPDF() {
+  if (!window.jspdf?.jsPDF) await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
+  if (!window.jspdf?.jsPDF?.API?.autoTable && !window.jspdf_autotable) await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js");
+  return window.jspdf.jsPDF;
+}
+const kepPendek = kp => kp === KEP_GAGAL ? "BELUM CAPAI" : kp === "TIDAK HADIR" ? "TH" : (kp || "");
+function skopEksport() {
+  const e = S.sel.eks = S.sel.eks || { skop: "kelas", ujian: "semua" };
+  const c = S.cfg; if (!darjahList().includes(+e.darjah)) e.darjah = darjahList()[0];
+  let kls = e.skop === "sekolah" ? c.kelas.slice() : e.skop === "darjah" ? kelasOfDarjah(e.darjah) : [kelasById(e.kelas) || kelasOfDarjah(e.darjah)[0]].filter(Boolean);
+  kls = kls.sort((a, b) => a.darjah - b.darjah || a.nama.localeCompare(b.nama));
+  /* "all exams" skips exams that have no marks yet for these classes */
+  const ujs = e.ujian === "semua" ? c.ujian.filter(u => kls.some(k => Object.keys(S.markah[mkKey(u.id, k.id)] || {}).length)) : c.ujian.filter(u => u.id === e.ujian);
+  return { e, kls, ujs };
+}
+/* one table of results per class + exam (shared by Excel and PDF) */
+function dataKelas(u, k) {
+  const subj = subjOf(k.darjah); const rows = hasilDarjah(u.id, k.darjah).filter(r => r.kelas.id === k.id);
+  return { subj, rows: rows.map((r, i) => ({ no: i + 1, r, m: recOf(u.id, k.id, r.m.id)?.m || {} })) };
+}
+function dataAnalisis(u, k) {
+  const subj = subjOf(k.darjah); const rows = hasilDarjah(u.id, k.darjah).filter(r => r.kelas.id === k.id);
+  const sub = subj.map(s => ({ s, a: aggSubjek(rows, s.kod) })).filter(x => x.a.daftar);
+  return { sub, all: aggKeseluruhan(rows) };
+}
+async function eksportExcel() {
+  if (typeof XLSX === "undefined") return toast("Pustaka Excel gagal dimuatkan. Semak sambungan internet.");
+  const { kls, ujs } = skopEksport(); const c = S.cfg; if (!ujs.length) return toast("Tiada markah untuk dimuat turun."); const wb = XLSX.utils.book_new(); const used = new Set();
+  const nm = t => { let n = t.replace(/[\\/?*[\]:]/g, " ").slice(0, 31), i = 2; while (used.has(n)) n = (t.slice(0, 27) + " (" + i++ + ")").slice(0, 31); used.add(n); return n; };
+  const info = [["myMarkah - " + c.sekolah.nama], ["Tahun", S.tahun], ["Dijana oleh", S.user?.nama || ""], ["Tarikh", new Date().toLocaleString("ms-MY")], ["Kelas", kls.map(k => k.nama).join(", ")], ["Ujian", ujs.map(u => u.nama).join(", ")], [], ["Gred", "Markah minimum", "Taksiran"], ...skalaSorted().map(s => [s.g, s.min, s.label])];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(info), nm("Maklumat"));
+  for (const u of ujs) {
+    for (const k of kls) {
+      const { subj, rows } = dataKelas(u, k);
+      const aoa = [[`${c.sekolah.nama} - ${k.nama} - ${u.nama} ${S.tahun}`], [`Guru kelas: ${k.guru || "-"}${k.pembantu ? " | Pembantu: " + k.pembantu : ""}`], [],
+        ["NO", "NO IC", "NAMA MURID", ...subj.flatMap(s => [s.kod, s.kod + " G"]), "JUMLAH", "PURATA", "GP", "KEPUTUSAN", "KDK", "KDT", "ANALISIS", "KEHADIRAN", "ULASAN GURU KELAS"]];
+      rows.forEach(({ no, r, m }) => aoa.push([no, r.m.ic, r.m.nama, ...subj.flatMap(s => [m[s.kod] ?? "", gradeOf(m[s.kod])]), r.k.hadir ? r.k.jumlah : "", r.k.purata != null ? +r.k.purata.toFixed(2) : "", r.k.gp != null ? +r.k.gp.toFixed(2) : "", r.k.keputusan, r.kdk ? `${r.kdk}/${r.kdkN}` : "", r.kdt ? `${r.kdt}/${r.kdtN}` : "", r.k.analisis, r.k.kehadiran, r.k.ulasan]));
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+      ws["!cols"] = [{ wch: 4 }, { wch: 14 }, { wch: 38 }, ...subj.flatMap(() => [{ wch: 5 }, { wch: 4 }]), { wch: 7 }, { wch: 7 }, { wch: 5 }, { wch: 14 }, { wch: 6 }, { wch: 7 }, { wch: 22 }, { wch: 9 }, { wch: 50 }];
+      XLSX.utils.book_append_sheet(wb, ws, nm(`${k.nama} ${u.nama}`));
+    }
+    const an = [[`ANALISIS ${u.nama} ${S.tahun}`], [], ["KELAS", "SUBJEK", ...GC().flatMap(g => [g, "%" + g]), "GPMP", "LULUS", "%LULUS", "DAFTAR", "HADIR"]];
+    for (const k of kls) {
+      const { sub, all } = dataAnalisis(u, k);
+      sub.forEach(({ s, a }) => an.push([k.nama, s.kod, ...GC().flatMap(g => [a.g[g] || 0, +pc(a.g[g] || 0, a.daftar).toFixed(1)]), a.gp != null ? +a.gp.toFixed(2) : "", a.lulus, +pc(a.lulus, a.hadir).toFixed(1), a.daftar, a.hadir]));
+      an.push([k.nama, "KESELURUHAN (GPK)", ...GC().flatMap(g => [all.g[g] || 0, +pc(all.g[g] || 0, all.ent + all.th).toFixed(1)]), all.gp != null ? +all.gp.toFixed(2) : "", all.lulus + " murid", +pc(all.lulus, all.hadir).toFixed(1), all.bil, all.hadir], []);
+    }
+    const wa = XLSX.utils.aoa_to_sheet(an); wa["!cols"] = [{ wch: 16 }, { wch: 20 }];
+    XLSX.utils.book_append_sheet(wb, wa, nm(`Analisis ${u.nama}`));
+  }
+  const fn = `myMarkah ${S.tahun} ${kls.length === 1 ? kls[0].nama : S.sel.eks.skop === "darjah" ? "Tahun " + S.sel.eks.darjah : "Sekolah"} ${ujs.length === 1 ? ujs[0].nama : "Semua ujian"}.xlsx`;
+  XLSX.writeFile(wb, fn); toast("Fail Excel dimuat turun: " + fn);
+}
+async function eksportPDF() {
+  const { kls, ujs } = skopEksport(); const c = S.cfg;
+  if (!ujs.length) return toast("Tiada markah untuk dimuat turun.");
+  let JsPDF; try { JsPDF = await getJsPDF(); } catch (e) { return cetakLaporan(kls, ujs); }
+  try { await binaPDF(JsPDF, kls, ujs, c); } catch (e) { console.error(e); cetakLaporan(kls, ujs); }
+}
+async function binaPDF(JsPDF, kls, ujs, c) {
+  const doc = new JsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  const tbl = o => doc.autoTable ? doc.autoTable(o) : (window.jspdf_autotable.default || window.jspdf_autotable.autoTable)(doc, o);
+  const em = [11, 110, 79], W = doc.internal.pageSize.getWidth(); let first = true;
+  const tajuk = (t1, t2) => { if (!first) doc.addPage(); first = false; doc.setFillColor(...em); doc.rect(0, 0, W, 16, "F"); doc.setTextColor(255); doc.setFontSize(12); doc.text(t1, 10, 7); doc.setFontSize(8.5); doc.text(t2, 10, 12.5); doc.setTextColor(20); };
+  for (const u of ujs) for (const k of kls) {
+    const { subj, rows } = dataKelas(u, k);
+    tajuk(`${c.sekolah.nama} - ${k.nama} - ${u.nama} ${S.tahun}`, `Guru kelas: ${k.guru || "-"}${k.pembantu ? "   Pembantu: " + k.pembantu : ""}   |   ${rows.length} murid   |   Dijana ${new Date().toLocaleDateString("ms-MY")}`);
+    tbl({ startY: 20, theme: "grid", styles: { fontSize: 6.5, cellPadding: 0.9, halign: "center", valign: "middle" }, headStyles: { fillColor: [220, 239, 229], textColor: [7, 81, 58], fontStyle: "bold" },
+      columnStyles: { 1: { halign: "left", cellWidth: 52 } },
+      head: [["No", "Nama murid", ...subj.map(s => s.kod), "Jumlah", "Purata", "GP", "Keputusan", "KDK", "KDT"]],
+      body: rows.map(({ no, r, m }) => [no, r.m.nama, ...subj.map(s => m[s.kod] == null || m[s.kod] === "" ? "" : `${m[s.kod]} ${m[s.kod] === "TH" ? "" : gradeOf(m[s.kod])}`.trim()), r.k.hadir ? r.k.jumlah : "", fmt(r.k.purata), fmt(r.k.gp), kepPendek(r.k.keputusan), r.kdk ? `${r.kdk}/${r.kdkN}` : "", r.kdt ? `${r.kdt}/${r.kdtN}` : ""]) });
+    const { sub, all } = dataAnalisis(u, k);
+    let y = (doc.lastAutoTable?.finalY || 20) + 6; if (y > 150) { tajuk(`Analisis ${k.nama} - ${u.nama} ${S.tahun}`, c.sekolah.nama); y = 20; }
+    doc.setFontSize(9); doc.text(`Analisis subjek ${k.nama} - GPK ${fmt(all.gp)} - Lulus ${all.lulus}/${all.hadir} murid (${fmt(pc(all.lulus, all.hadir), 1)}%)`, 10, y);
+    tbl({ startY: y + 2, theme: "grid", styles: { fontSize: 6.5, cellPadding: 0.8, halign: "center" }, headStyles: { fillColor: [247, 236, 210], textColor: [60, 40, 0] }, columnStyles: { 0: { halign: "left", cellWidth: 60 } },
+      head: [["Subjek", ...GC(), "GPMP", "Lulus", "% Lulus", "Daftar", "Hadir"]],
+      body: sub.map(({ s, a }) => [`${s.kod} ${s.nama}`, ...GC().map(g => a.g[g] || 0), fmt(a.gp), a.lulus, fmt(pc(a.lulus, a.hadir), 1), a.daftar, a.hadir]) });
+  }
+  const n = doc.getNumberOfPages(); for (let i = 1; i <= n; i++) { doc.setPage(i); doc.setFontSize(7); doc.setTextColor(120); doc.text(`myMarkah - ${c.sekolah.nama} - Halaman ${i}/${n}`, W - 10, doc.internal.pageSize.getHeight() - 5, { align: "right" }); }
+  const fn = `myMarkah ${S.tahun} ${kls.length === 1 ? kls[0].nama : S.sel.eks.skop === "darjah" ? "Tahun " + S.sel.eks.darjah : "Sekolah"} ${ujs.length === 1 ? ujs[0].nama : "Semua ujian"}.pdf`;
+  doc.save(fn); toast("Fail PDF dimuat turun: " + fn);
+}
+/* fallback when the PDF library cannot load: printable page → "Save as PDF" */
+function cetakLaporan(kls, ujs) {
+  const c = S.cfg; const w = window.open("", "_blank"); if (!w) return toast("Tetingkap baharu disekat oleh pelayar. Benarkan pop-up untuk laman ini.");
+  const sec = []; for (const u of ujs) for (const k of kls) { const { subj, rows } = dataKelas(u, k);
+    sec.push(`<section><h2>${esc(c.sekolah.nama)} - ${esc(k.nama)} - ${esc(u.nama)} ${S.tahun}</h2><p>Guru kelas: ${esc(k.guru || "-")}</p><table><thead><tr><th>No</th><th>Nama murid</th>${subj.map(s => `<th>${esc(s.kod)}</th>`).join("")}<th>Jumlah</th><th>Purata</th><th>GP</th><th>Keputusan</th><th>KDK</th></tr></thead><tbody>${rows.map(({ no, r, m }) => `<tr><td>${no}</td><td class="l">${esc(r.m.nama)}</td>${subj.map(s => `<td>${esc(m[s.kod] ?? "")}</td>`).join("")}<td>${r.k.hadir ? r.k.jumlah : ""}</td><td>${fmt(r.k.purata)}</td><td>${fmt(r.k.gp)}</td><td>${esc(kepPendek(r.k.keputusan))}</td><td>${r.kdk ? r.kdk + "/" + r.kdkN : ""}</td></tr>`).join("")}</tbody></table></section>`); }
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>myMarkah ${S.tahun}</title><style>@page{size:A4 landscape;margin:10mm}body{font:10px Arial,sans-serif}section{page-break-after:always}h2{font-size:13px;margin:0 0 2px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #999;padding:2px 3px;text-align:center}th{background:#dcefe5}td.l{text-align:left}</style></head><body>${sec.join("")}<script>onload=()=>print()<\/script></body></html>`);
+  w.document.close(); toast("Pustaka PDF tidak dapat dimuatkan. Pilih \"Save as PDF\" dalam tetingkap cetak.");
+}
+VIEWS.muatturun = el => {
+  const c = S.cfg; if (!c.kelas.length) { el.innerHTML = emptyState("Belum ada kelas."); return; }
+  const { e, kls, ujs } = skopEksport(); const bil = kls.reduce((a, k) => a + muridOf(k.id).length, 0);
+  el.innerHTML = `<div class="head"><div><div class="eyebrow">Simpanan rekod</div><h2>Muat turun data markah</h2></div></div>
+  <div class="panel stack">
+    <div class="toolbar">
+      <div class="f" style="display:grid;gap:4px"><span class="small muted" style="font-weight:600">Skop</span><div class="seg" id="eSkop">
+        <button data-s="kelas" class="${e.skop === "kelas" ? "on" : ""}">Satu kelas</button><button data-s="darjah" class="${e.skop === "darjah" ? "on" : ""}">Satu darjah</button>${isAdmin() ? `<button data-s="sekolah" class="${e.skop === "sekolah" ? "on" : ""}">Seluruh sekolah</button>` : ""}</div></div>
+      ${e.skop !== "sekolah" ? `<label class="f">Darjah<select class="inp" id="eD">${darjahList().map(d => `<option value="${d}" ${d === +e.darjah ? "selected" : ""}>Tahun ${d}</option>`).join("")}</select></label>` : ""}
+      ${e.skop === "kelas" ? `<label class="f">Kelas<select class="inp" id="eK">${opt(kelasOfDarjah(e.darjah).sort((a, b) => a.nama.localeCompare(b.nama)), kls[0]?.id)}</select></label>` : ""}
+      <label class="f">Ujian<select class="inp" id="eU"><option value="semua">Semua ujian (${c.ujian.length})</option>${opt(c.ujian, e.ujian)}</select></label>
+    </div>
+    ${!ujs.length ? `<div class="banner lock">Belum ada markah bagi pilihan ini.</div>` : ""}<div class="banner">Akan mengandungi <b>${kls.length} kelas × ${ujs.length} ujian${e.ujian === "semua" && ujs.length < c.ujian.length ? " (ujian tanpa markah tidak dimasukkan)" : ""}</b> (${bil} murid): senarai markah, gred, jumlah, purata, GP, keputusan, kedudukan, kehadiran, ulasan dan analisis subjek setiap kelas.</div>
+    ${topLevel ? `<div class="row"><button class="btn pri" id="eXls">Muat turun Excel (.xlsx)</button><button class="btn gold" id="ePdf">Muat turun PDF</button></div>
+    <p class="muted small" style="margin:0">Excel: satu helaian bagi setiap kelas &amp; ujian, helaian analisis bagi setiap ujian, dan helaian maklumat. PDF: A4 melintang, satu halaman bagi setiap kelas &amp; ujian berserta analisis subjek. Simpan fail ini di Google Drive DELIMa sekolah sebagai rekod.</p>` : `<div class="banner lock">Muat turun hanya berfungsi di laman myMarkah sebenar (bukan pratonton ini).</div>`}
+  </div>`;
+  $$("#eSkop button").forEach(b => b.onclick = () => { e.skop = b.dataset.s; render(); });
+  $("#eD") && ($("#eD").onchange = ev => { e.darjah = +ev.target.value; e.kelas = null; render(); });
+  $("#eK") && ($("#eK").onchange = ev => { e.kelas = ev.target.value; render(); });
+  $("#eU").onchange = ev => { e.ujian = ev.target.value; render(); };
+  const busy = async (btn, fn) => { const t = btn.textContent; btn.disabled = true; btn.textContent = "Menyediakan…"; try { await fn(); } catch (er) { toast("Gagal: " + er.message); console.error(er); } btn.disabled = false; btn.textContent = t; };
+  $("#eXls") && ($("#eXls").onclick = () => busy($("#eXls"), eksportExcel));
+  $("#ePdf") && ($("#ePdf").onclick = () => busy($("#ePdf"), eksportPDF));
 };
 
 /* ---------------- SLIP ---------------- */
@@ -1613,6 +1732,13 @@ function renderParent() {
 }
 
 /* ---------------- TETAPAN ---------------- */
+/* staff <select>: value = login email; an unregistered legacy name is kept as "nama:<NAME>" */
+function pilihStaf(attr, emel, nama) {
+  const staf = (S.staffAll || []).slice().sort((a, b) => (a.data.nama || "").localeCompare(b.data.nama || ""));
+  const em = String(emel || "").toLowerCase(), ada = staf.some(x => x.id === em);
+  return `<select class="inp" ${attr} style="width:250px"><option value="">— tiada —</option>${staf.map(x => `<option value="${esc(x.id)}" ${x.id === em ? "selected" : ""}>${esc(x.data.nama)}</option>`).join("")}${em && !ada ? `<option value="${esc(em)}" selected>${esc(nama || em)} (emel tidak berdaftar)</option>` : !em && nama ? `<option value="nama:${esc(nama)}" selected>${esc(nama)} (belum berdaftar)</option>` : ""}</select>`;
+}
+function bacaStaf(v) { v = String(v || ""); if (!v) return { emel: "", nama: "" }; if (v.startsWith("nama:")) return { emel: "", nama: v.slice(5) }; return { emel: v.toLowerCase(), nama: staffNama(v.toLowerCase()) || "" }; }
 VIEWS.tetapan = el => {
   if (!isAdmin()) { el.innerHTML = emptyState("Hanya pentadbir boleh mengubah tetapan."); return; }
   const c = S.cfg; const nU = c.ujian.length;
@@ -1649,9 +1775,9 @@ VIEWS.tetapan = el => {
       <div class="row"><input class="inp" id="nY" value="${+S.meta.tahunList.slice().sort().at(-1) + 1}" style="width:100px"><button class="btn" id="nYGo">Mula tahun baharu</button></div></div>
   </div>
   <div class="panel stack" data-st="kelas"><h3>Kelas</h3>
-    <p class="muted small" style="margin:0">Isikan emel DELIMa guru kelas supaya guru itu boleh menetapkan guru subjek bagi kelasnya melalui menu <b>Kelas Saya</b>.</p>
-    <div class="tw"><table class="t"><thead><tr><th class="l">Nama kelas</th><th>Darjah</th><th class="l">Guru kelas</th><th class="l">Emel guru kelas (DELIMa)</th><th>Murid</th><th></th></tr></thead><tbody>
-      ${c.kelas.map((k, i) => `<tr><td class="l"><input class="inp" data-kn="${i}" value="${esc(k.nama)}"></td><td><select class="inp" data-kd="${i}">${ALL.map(d => `<option ${+k.darjah === d ? "selected" : ""}>${d}</option>`).join("")}</select></td><td class="l"><input class="inp" data-kg="${i}" value="${esc(k.guru || "")}" style="width:240px"></td><td class="l"><input class="inp" type="email" data-ke="${i}" value="${esc(k.guruEmel || "")}" placeholder="nama@moe-dl.edu.my" style="width:230px"></td><td>${muridOf(k.id).length}</td><td><button class="btn sm danger" data-kx="${i}">Padam</button></td></tr>`).join("")}
+    <p class="muted small" style="margin:0">Pilih guru kelas dan pembantu guru kelas daripada senarai pengguna berdaftar (Tetapan → Pengguna). Kedua-duanya mendapat menu <b>Kelas Saya</b>, boleh menetapkan guru subjek, dan mengisi ulasan &amp; kehadiran kelas itu.</p>
+    <div class="tw"><table class="t"><thead><tr><th class="l">Nama kelas</th><th>Darjah</th><th class="l">Guru kelas</th><th class="l">Pembantu guru kelas</th><th>Murid</th><th></th></tr></thead><tbody>
+      ${c.kelas.map((k, i) => `<tr><td class="l"><input class="inp" data-kn="${i}" value="${esc(k.nama)}"></td><td><select class="inp" data-kd="${i}">${ALL.map(d => `<option ${+k.darjah === d ? "selected" : ""}>${d}</option>`).join("")}</select></td><td class="l">${pilihStaf(`data-kg="${i}"`, k.guruEmel, k.guru)}</td><td class="l">${pilihStaf(`data-kp="${i}"`, k.pembantuEmel, k.pembantu)}</td><td>${muridOf(k.id).length}</td><td><button class="btn sm danger" data-kx="${i}">Padam</button></td></tr>`).join("")}
     </tbody></table></div><div class="row"><button class="btn" id="kAdd">Tambah kelas</button><button class="btn pri" id="kSave">Simpan kelas</button><button class="btn" id="kImp">Import Excel</button></div></div>
   <div class="panel stack" data-st="guru"><h3>Guru subjek mengikut kelas</h3>
     <p class="muted small" style="margin:0">Pentadbir boleh menetapkan guru subjek bagi semua kelas. Guru kelas juga boleh menetapkannya bagi kelas sendiri (menu Kelas Saya).</p>
@@ -1738,9 +1864,11 @@ VIEWS.tetapan = el => {
     await S.db.set("tahun", y, nc); S.meta.tahunList.push(y); S.meta.tahunAktif = y; await saveMeta(); await loadYear(y); toast("Tahun " + y + " dimulakan."); render();
   };
   /* kelas */
-  const readKelas = () => c.kelas.forEach((k, i) => { k.nama = $(`[data-kn="${i}"]`).value.trim().toUpperCase(); k.darjah = +$(`[data-kd="${i}"]`).value; k.guru = $(`[data-kg="${i}"]`).value.trim().toUpperCase(); k.guruEmel = $(`[data-ke="${i}"]`).value.trim().toLowerCase(); });
+  const readKelas = () => c.kelas.forEach((k, i) => { k.nama = $(`[data-kn="${i}"]`).value.trim().toUpperCase(); k.darjah = +$(`[data-kd="${i}"]`).value; 
+    const g = bacaStaf($(`[data-kg="${i}"]`).value), pb = bacaStaf($(`[data-kp="${i}"]`).value);
+    k.guruEmel = g.emel; k.guru = g.nama; k.pembantuEmel = pb.emel; k.pembantu = pb.nama; });
   $("#kAdd").onclick = () => { readKelas(); c.kelas.push({ id: "k" + uid(), nama: "KELAS BAHARU", darjah: 1, guru: "" }); render(); };
-  $("#kSave").onclick = async () => { readKelas(); await saveCfg(); for (const k of c.kelas) await saveGS(k.id); toast("Kelas disimpan. Guru kelas boleh menetapkan guru subjek melalui menu Kelas Saya."); render(); };
+  $("#kSave").onclick = async () => { readKelas(); const dua = c.kelas.find(k => k.guruEmel && k.guruEmel === k.pembantuEmel); if (dua) return toast(`${dua.nama}: guru kelas dan pembantu tidak boleh orang yang sama.`); await saveCfg(); for (const k of c.kelas) await saveGS(k.id); toast("Kelas disimpan. Guru kelas boleh menetapkan guru subjek melalui menu Kelas Saya."); render(); };
   $("#kImp").onclick = () => importDialog();
   $$("[data-kx]").forEach(b => b.onclick = async () => { const k = c.kelas[+b.dataset.kx]; if (muridOf(k.id).length && !(await ask(`Kelas <b>${esc(k.nama)}</b> ada ${muridOf(k.id).length} murid. Padam kelas dan semua murid serta markahnya?`, "Padam"))) return; readKelas(); c.kelas.splice(+b.dataset.kx, 1); delete S.murid[k.id]; await S.db.del("murid", `${S.tahun}_${k.id}`).catch(() => { }); for (const u of c.ujian) { delete S.markah[mkKey(u.id, k.id)]; await S.db.del("markah", `${S.tahun}_${mkKey(u.id, k.id)}`).catch(() => { }); } await saveCfg(); render(); });
   /* subjek */
@@ -1779,7 +1907,7 @@ VIEWS.tetapan = el => {
 };
 async function loadStaff() {
   const box = $("#staffL"); if (!box) return; const c = S.cfg;
-  const kelasGuru = em => c.kelas.filter(k => (k.guruEmel || "").toLowerCase() === em).map(k => k.nama);
+  const kelasGuru = em => [...c.kelas.filter(k => (k.guruEmel || "").toLowerCase() === em).map(k => k.nama), ...c.kelas.filter(k => (k.pembantuEmel || "").toLowerCase() === em).map(k => k.nama + " (pembantu)")];
   try {
     const list = (await S.db.list("staff")); S.staffAll = list.slice(); list.sort((a, b) => ((b.data.peranan === "admin") - (a.data.peranan === "admin")) || (a.data.nama || "").localeCompare(b.data.nama || "")); /* admins first, then by name */
     box.classList.remove("muted");
@@ -1864,8 +1992,10 @@ service cloud.firestore {
     match /murid/{id}     { allow read: if isStaff(); allow write: if isAdmin(); }
     match /markah/{id}    { allow read, write: if isStaff(); }
     match /guruSubjek/{id} { allow read: if isStaff(); allow create, delete: if isAdmin();
-                            allow update: if isAdmin() || (isStaff() && resource.data.guruKelasEmel == email()
-                                          && request.resource.data.guruKelasEmel == resource.data.guruKelasEmel); }
+                            allow update: if isAdmin() || (isStaff()
+                                          && (resource.data.guruKelasEmel == email() || resource.data.get('pembantuEmel', '') == email())
+                                          && request.resource.data.guruKelasEmel == resource.data.guruKelasEmel
+                                          && request.resource.data.get('pembantuEmel', '') == resource.data.get('pembantuEmel', '')); }
     match /portal/{id}    { allow get: if true; allow list: if false; allow write: if isAdmin(); }
     match /staff/{em}     { allow get: if request.auth != null && (email() == em || isStaff());
                             allow list: if isStaff(); allow write: if isAdmin(); }
