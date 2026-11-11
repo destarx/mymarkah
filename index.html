@@ -258,6 +258,9 @@ pre.code{background:var(--bg);border:1px solid var(--line);border-radius:8px;pad
 .sw span::before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:var(--paper);border-radius:50%;transition:transform .15s;box-shadow:0 1px 2px rgba(0,0,0,.25)}
 .sw input:checked+span{background:var(--em)}
 .sw input:checked+span::before{transform:translateX(18px)}
+.sw.sm{width:34px;height:20px}
+.sw.sm span::before{width:14px;height:14px}
+.sw.sm input:checked+span::before{transform:translateX(14px)}
 .sw input:focus-visible+span{outline:2px solid var(--gold);outline-offset:2px}
 @media print{.savebar,.extabs{display:none!important}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -460,16 +463,21 @@ function kira(rec, subjList, cfg = S.cfg) {
   const keputusan = !ada ? "" : !hadir ? "TIDAK HADIR" : gagal ? KEP_GAGAL : "LULUS";
   return { rows, cnt, gagal: gagal ? 1 : 0, jumlah: jum, hadir, ada, purata: hadir ? jum / hadir : null, gp: hadir ? (mata + th * maxM) / (hadir + th) : null, keputusan, analisis, ulasan: rec?.ulasan || "", kehadiran: rec?.hadir || "" };
 }
+/* subjects the admin has chosen to count for ranking (per darjah); others are still on the slip */
+const rankKecuali = d => (S.cfg.rankKecuali?.[d] || []);
+const rankSubjOf = d => subjOf(d).filter(s => !rankKecuali(d).includes(s.kod));
 function rank(list, key) {
-  /* same order as the school's Excel: passing pupils first, then lowest GP, then highest total */
-  const r = list.filter(x => x.k.hadir > 0).sort((a, b) => (a.k.gagal - b.k.gagal) || (a.k.gp - b.k.gp) || (b.k.jumlah - a.k.jumlah) || a.m.nama.localeCompare(b.m.nama));
+  /* same order as the school's Excel: passing pupils first, then lowest GP, then highest total.
+     x.kr = result over ranking subjects only (equals x.k when every subject counts) */
+  const K = x => x.kr || x.k;
+  const r = list.filter(x => K(x).hadir > 0).sort((a, b) => (K(a).gagal - K(b).gagal) || (K(a).gp - K(b).gp) || (K(b).jumlah - K(a).jumlah) || a.m.nama.localeCompare(b.m.nama));
   r.forEach((x, i) => { x[key] = i + 1; x[key + "N"] = r.length; });
 }
 /* results for a whole darjah for one exam (with KDK + KDT) */
 function hasilDarjah(ujian, d) {
-  const subj = subjOf(d); const out = [];
+  const subj = subjOf(d), rs = rankSubjOf(d), semua = rs.length === subj.length; const out = [];
   for (const k of kelasOfDarjah(d)) {
-    const grp = muridOf(k.id).map(m => ({ m, kelas: k, k: kira(recOf(ujian, k.id, m.id), subj) }));
+    const grp = muridOf(k.id).map(m => { const rec = recOf(ujian, k.id, m.id), kk = kira(rec, subj); return { m, kelas: k, k: kk, kr: semua ? kk : kira(rec, rs) }; });
     rank(grp, "kdk"); out.push(...grp);
   }
   rank(out, "kdt"); return out;
@@ -997,9 +1005,10 @@ VIEWS.analisis = el => {
   }
   if (tab === "pelajar") {
     const sorted = rows.slice().sort((a, b) => (a.kdt || 1e9) - (b.kdt || 1e9) || a.m.nama.localeCompare(b.m.nama));
-    html += `<div class="panel"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3>Kedudukan murid Tahun ${d}</h3><input class="inp noprint" id="aQ" placeholder="Cari nama atau kelas" style="width:240px"></div><div class="tw" style="max-height:72vh"><table class="t" id="aTbl"><thead><tr><th>KDT</th><th class="l">Nama murid</th><th class="l">Kelas</th><th>Jumlah</th><th>Purata %</th><th>GP</th><th>Keputusan</th><th>KDK</th><th class="l">Analisis</th></tr></thead><tbody>
-      ${sorted.map(r => `<tr data-q="${esc((r.m.nama + " " + r.kelas.nama).toLowerCase())}"><td class="num"><b>${r.kdt ? r.kdt + "/" + r.kdtN : "–"}</b></td><td class="l name">${esc(r.m.nama)}</td><td class="l">${esc(r.kelas.nama)}</td><td class="num">${r.k.hadir ? r.k.jumlah : "–"}</td><td class="num">${fmt(r.k.purata)}</td><td class="num"><b>${fmt(r.k.gp)}</b></td><td>${kepPill(r.k.keputusan)}</td><td class="num">${r.kdk ? r.kdk + "/" + r.kdkN : "–"}</td><td class="l small">${esc(r.k.analisis)}</td></tr>`).join("")}
-      </tbody></table></div><p class="muted small" style="margin:8px 0 0">Kedudukan disusun mengikut GP terendah, kemudian jumlah markah tertinggi.</p></div>`;
+    const exK = rankKecuali(d).filter(kod => subj.some(s => s.kod === kod)), adaEx = exK.length > 0;
+    html += `<div class="panel"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3>Kedudukan murid Tahun ${d}</h3><input class="inp noprint" id="aQ" placeholder="Cari nama atau kelas" style="width:240px"></div><div class="tw" style="max-height:72vh"><table class="t" id="aTbl"><thead><tr><th>KDT</th><th class="l">Nama murid</th><th class="l">Kelas</th><th>Jumlah</th><th>Purata %</th><th>GP</th>${adaEx ? `<th title="GP bagi subjek yang dikira untuk kedudukan sahaja">GP kedudukan</th>` : ""}<th>Keputusan</th><th>KDK</th><th class="l">Analisis</th></tr></thead><tbody>
+      ${sorted.map(r => `<tr data-q="${esc((r.m.nama + " " + r.kelas.nama).toLowerCase())}"><td class="num"><b>${r.kdt ? r.kdt + "/" + r.kdtN : "–"}</b></td><td class="l name">${esc(r.m.nama)}</td><td class="l">${esc(r.kelas.nama)}</td><td class="num">${r.k.hadir ? r.k.jumlah : "–"}</td><td class="num">${fmt(r.k.purata)}</td><td class="num"><b>${fmt(r.k.gp)}</b></td>${adaEx ? `<td class="num">${fmt(r.kr.gp)}</td>` : ""}<td>${kepPill(r.k.keputusan)}</td><td class="num">${r.kdk ? r.kdk + "/" + r.kdkN : "–"}</td><td class="l small">${esc(r.k.analisis)}</td></tr>`).join("")}
+      </tbody></table></div><p class="muted small" style="margin:8px 0 0">Kedudukan disusun: murid lulus dahulu, kemudian GP terendah, kemudian jumlah markah tertinggi. ${adaEx ? `Subjek <b>tidak</b> dikira untuk kedudukan Tahun ${d}: ${exK.map(esc).join(", ")} (ditetapkan oleh pentadbir).` : `Semua subjek dikira.`}</p></div>`;
   }
   if (tab === "banding") {
     const per = c.ujian.map(x => ({ u: x, rows: hasilDarjah(x.id, d) }));
@@ -1493,6 +1502,13 @@ VIEWS.tetapan = el => {
     <div class="tw"><table class="t"><thead><tr><th class="l">Nama kelas</th><th>Darjah</th><th class="l">Guru kelas</th><th>Murid</th><th></th></tr></thead><tbody>
       ${c.kelas.map((k, i) => `<tr><td class="l"><input class="inp" data-kn="${i}" value="${esc(k.nama)}"></td><td><select class="inp" data-kd="${i}">${ALL.map(d => `<option ${+k.darjah === d ? "selected" : ""}>${d}</option>`).join("")}</select></td><td class="l"><input class="inp" data-kg="${i}" value="${esc(k.guru || "")}" style="width:260px"></td><td>${muridOf(k.id).length}</td><td><button class="btn sm danger" data-kx="${i}">Padam</button></td></tr>`).join("")}
     </tbody></table></div><div class="row"><button class="btn" id="kAdd">Tambah kelas</button><button class="btn pri" id="kSave">Simpan kelas</button><button class="btn" id="kImp">Import Excel</button></div></div>
+  <div class="panel stack" id="rkPanel"><h3>Subjek dikira untuk kedudukan (KDK &amp; KDT)</h3>
+    <p class="muted small" style="margin:0">Matikan suis bagi subjek yang tidak mahu diambil kira semasa menyusun kedudukan murid dalam kelas dan darjah. Jumlah markah, GP, analisis dan keputusan pada slip tetap dikira daripada semua subjek. Disimpan serta-merta; klik <b>Kemas kini portal ibu bapa</b> selepas itu.</p>
+    <div class="tw"><table class="t"><thead><tr><th class="l sticky">Darjah</th>${c.subjek.map(s => `<th title="${esc(s.nama)}">${esc(s.kod)}</th>`).join("")}<th>Dikira</th><th></th></tr></thead><tbody>
+      ${ALL.map(d => { const sd = subjOf(d).map(s => s.kod), ex = rankKecuali(d); return `<tr><td class="l sticky"><b>Tahun ${d}</b></td>${c.subjek.map(s => sd.includes(s.kod) ? `<td><label class="sw sm" title="${esc(s.nama)} · Tahun ${d}"><input type="checkbox" data-rk="${d}|${esc(s.kod)}" aria-label="Kira ${esc(s.nama)} untuk kedudukan Tahun ${d}" ${ex.includes(s.kod) ? "" : "checked"}><span></span></label></td>` : `<td class="muted">–</td>`).join("")}<td class="num" data-rkn="${d}">${sd.filter(x => !ex.includes(x)).length}/${sd.length}</td><td><button class="btn sm" data-rall="${d}">Kira semua</button></td></tr>`; }).join("")}
+    </tbody></table></div>
+    <label class="chk"><input type="checkbox" id="rkSemua"> Gunakan setiap perubahan suis pada semua darjah</label>
+  </div>
   <div class="panel stack"><h3>Subjek</h3>
     <div class="tw"><table class="t"><thead><tr><th class="l">Kod</th><th class="l">Nama subjek</th><th>Darjah</th><th>Pilihan</th><th></th></tr></thead><tbody>
       ${c.subjek.map((s, i) => `<tr><td class="l"><input class="inp" data-sk="${i}" value="${esc(s.kod)}" style="width:80px"></td><td class="l"><input class="inp" data-sn="${i}" value="${esc(s.nama)}" style="width:300px"></td><td>${ALL.map(d => `<label class="chk"><input type="checkbox" data-sd="${i}" value="${d}" ${(s.darjah || ALL).map(Number).includes(d) ? "checked" : ""}>${d}</label>`).join("")}</td><td><input type="checkbox" data-sp="${i}" ${s.pilihan ? "checked" : ""} title="Subjek pilihan (tidak semua murid ambil)"></td><td><button class="btn sm danger" data-sx="${i}">Padam</button></td></tr>`).join("")}
@@ -1551,6 +1567,21 @@ VIEWS.tetapan = el => {
   $$("[data-kx]").forEach(b => b.onclick = async () => { const k = c.kelas[+b.dataset.kx]; if (muridOf(k.id).length && !(await ask(`Kelas <b>${esc(k.nama)}</b> ada ${muridOf(k.id).length} murid. Padam kelas dan semua murid serta markahnya?`, "Padam"))) return; readKelas(); c.kelas.splice(+b.dataset.kx, 1); delete S.murid[k.id]; await S.db.del("murid", `${S.tahun}_${k.id}`).catch(() => { }); for (const u of c.ujian) { delete S.markah[mkKey(u.id, k.id)]; await S.db.del("markah", `${S.tahun}_${mkKey(u.id, k.id)}`).catch(() => { }); } await saveCfg(); render(); });
   /* subjek */
   const readSubj = () => c.subjek.forEach((s, i) => { s.kod = $(`[data-sk="${i}"]`).value.trim().toUpperCase(); s.nama = $(`[data-sn="${i}"]`).value.trim().toUpperCase(); s.darjah = $$(`[data-sd="${i}"]`).filter(x => x.checked).map(x => +x.value); s.pilihan = $(`[data-sp="${i}"]`).checked; });
+  /* ranking subjects */
+  const rkSync = () => ALL.forEach(d => { const sd = subjOf(d).map(s => s.kod), ex = rankKecuali(d);
+    $$(`[data-rk^="${d}|"]`).forEach(i => i.checked = !ex.includes(i.dataset.rk.split("|")[1]));
+    const n = $(`[data-rkn="${d}"]`); if (n) n.textContent = `${sd.filter(x => !ex.includes(x)).length}/${sd.length}`; });
+  $$("[data-rk]").forEach(i => i.onchange = async () => {
+    const [d, kod] = i.dataset.rk.split("|"); const on = i.checked;
+    const ds = $("#rkSemua").checked ? ALL.filter(x => subjOf(x).some(s => s.kod === kod)) : [+d];
+    const next = structuredClone(c.rankKecuali || {});
+    for (const x of ds) { const ex = new Set(next[x] || []); on ? ex.delete(kod) : ex.add(kod); next[x] = [...ex]; }
+    const kosong = ds.find(x => !subjOf(x).some(s => !next[x].includes(s.kod)));
+    if (kosong) { i.checked = !on; return toast(`Sekurang-kurangnya satu subjek mesti dikira untuk kedudukan Tahun ${kosong}.`); }
+    c.rankKecuali = next; rkSync(); await saveCfg();
+    toast(`${kod} ${on ? "dikira" : "tidak dikira"} untuk kedudukan ${ds.length > 1 ? "semua darjah" : "Tahun " + d}.`);
+  });
+  $$("[data-rall]").forEach(b => b.onclick = async () => { const d = +b.dataset.rall; c.rankKecuali = { ...(c.rankKecuali || {}), [d]: [] }; rkSync(); await saveCfg(); toast(`Semua subjek dikira untuk kedudukan Tahun ${d}.`); });
   $("#sbAdd").onclick = () => { readSubj(); c.subjek.push({ kod: "BARU", nama: "SUBJEK BAHARU", darjah: [...ALL] }); render(); };
   $("#sbSave").onclick = async () => { readSubj(); const k = c.subjek.map(s => s.kod); if (new Set(k).size !== k.length) return toast("Kod subjek mesti unik."); await saveCfg(); toast("Subjek disimpan."); render(); };
   $$("[data-sx]").forEach(b => b.onclick = async () => { const s = c.subjek[+b.dataset.sx]; if (!(await ask(`Padam subjek <b>${esc(s.nama)}</b>? Markah sedia ada tidak dipadam tetapi tidak lagi dipaparkan.`, "Padam"))) return; readSubj(); c.subjek.splice(+b.dataset.sx, 1); await saveCfg(); render(); });

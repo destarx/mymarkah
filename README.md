@@ -45,7 +45,7 @@ Boleh guna projek sedia ada (`skjb-icthub`) atau projek baharu.
 - GP murid = purata nilai gred (A=1 … F=6); subjek TH dikira bernilai 6.
 - GPMP subjek / GPK kelas / GPD darjah = purata nilai gred murid yang hadir.
 - Keputusan: ada gred F → BELUM MENCAPAI TAHAP MINIMUM; selainnya LULUS.
-- Kedudukan (KDK/KDT): murid lulus dahulu, kemudian GP terendah, kemudian jumlah markah tertinggi.
+- Kedudukan (KDK/KDT): murid lulus dahulu, kemudian GP terendah, kemudian jumlah markah tertinggi. Pentadbir menentukan subjek yang dikira untuk kedudukan bagi setiap darjah di **Tetapan → Subjek dikira untuk kedudukan**; slip tetap memaparkan jumlah dan GP semua subjek.
 
 ## Keselamatan
 - Ibu bapa hanya boleh membaca dokumen keputusan anak mereka yang dikunci dengan No. MyKid + PIN (6 aksara rawak); senarai murid dan markah lain tidak boleh dibaca.
