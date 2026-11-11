@@ -1,4 +1,4 @@
-# eMarkah SKJB: panduan pemasangan
+# myMarkah SKJB: panduan pemasangan
 
 Aplikasi markah ujian tahunan: guru isi markah, analisis subjek/kelas/darjah, slip keputusan, dan portal semakan ibu bapa. Satu fail sahaja (`index.html`).
 

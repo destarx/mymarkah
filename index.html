@@ -6,7 +6,7 @@
 <style>[hidden]{display:none!important}body{margin:0}</style>
 </head>
 <body>
-<title>eMarkah SKJB</title>
+<title>myMarkah SKJB</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Sistem markah ujian tahunan SK Jalan Bintang: guru isi markah, analisis subjek, kelas dan darjah, portal ibu bapa.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -267,7 +267,7 @@ pre.code{background:var(--bg);border:1px solid var(--line);border-radius:8px;pad
 
 <script>
 /* =========================================================
-   eMarkah SKJB — sistem markah ujian tahunan
+   myMarkah SKJB — sistem markah ujian tahunan
    ---------------------------------------------------------
    KONFIGURASI PENGHOSAN (GitHub Pages / Firebase Hosting):
    Tampal firebaseConfig projek anda di bawah. Jika dibiarkan
@@ -646,7 +646,7 @@ async function staffAfterAuth(email) {
   email = email.toLowerCase();
   let st = await S.db.get("staff", email).catch(() => null);
   if (!st && ADMIN_EMAILS.map(x => x.toLowerCase()).includes(email)) { st = { nama: "Pentadbir", peranan: "admin", emel: email }; }
-  if (!st) { await S.fb.signOut(S.fb.auth); throw new Error("Akaun ini belum didaftarkan oleh pentadbir dalam eMarkah."); }
+  if (!st) { await S.fb.signOut(S.fb.auth); throw new Error("Akaun ini belum didaftarkan oleh pentadbir dalam myMarkah."); }
   S.user = { ...st, emel: email };
   if (st.peranan === "admin") S.db.list("staff").then(l => S.staffNames = l.map(x => x.data.nama)).catch(() => { });
   S.meta = await S.db.get("app", "meta") || { tahunAktif: String(new Date().getFullYear()), tahunList: [String(new Date().getFullYear())] };
@@ -665,7 +665,7 @@ function renderLogin(err) {
     <div class="login-hero">
       <div class="stack" style="gap:10px">
         <div class="eyebrow" style="color:inherit;opacity:.8">SK Jalan Bintang · Miri</div>
-        <h1>eMarkah</h1>
+        <h1>myMarkah</h1>
         <p style="margin:0;opacity:.88;max-width:34ch">Rekod markah ujian sepanjang tahun, analisis subjek, kelas dan darjah, serta semakan keputusan untuk ibu bapa.</p>
       </div>
       <div class="grid-deco" aria-hidden="true">${deco}</div>
@@ -739,7 +739,7 @@ function render() {
   const v = S.view;
   $("#app").innerHTML = `
   <header class="top">
-    <div class="brand">eMarkah<small>${esc(S.cfg.sekolah.nama)}</small></div>
+    <div class="brand">myMarkah<small>${esc(S.cfg.sekolah.nama)}</small></div>
     <div class="grow"></div>
     <label class="small">Tahun <select id="tYear" aria-label="Tahun">${S.meta.tahunList.map(y => `<option ${y === S.tahun ? "selected" : ""}>${y}</option>`).join("")}</select></label>
     <span class="who">${esc(S.user.nama)} · ${isAdmin() ? "Pentadbir" : "Guru"}${S.mode === "local" ? " · DEMO" : ""}</span>
@@ -1173,7 +1173,7 @@ VIEWS.semakan = el => {
   $$("#smTabs button").forEach(b => b.onclick = () => { S.sel.ujian = b.dataset.u; render(); });
   $$("[data-cell]").forEach(b => b.onclick = () => { const [kid, kod] = b.dataset.cell.split("|"); semakanCell(u, data.find(x => x.k.id === kid && x.s.kod === kod)); });
   $("#smCopy") && ($("#smCopy").onclick = async () => {
-    const txt = `*Peringatan isian markah ${u.nama} ${S.tahun}*\n${c.sekolah.nama}\n\n` + guruKeys.map(g => `${g}\n` + byGuru[g].map(x => `- ${x.k.nama} ${x.s.kod}: ${x.kosong.length}/${x.bil} murid belum diisi`).join("\n")).join("\n\n") + `\n\nSila lengkapkan dalam eMarkah dan tekan Simpan. Terima kasih.`;
+    const txt = `*Peringatan isian markah ${u.nama} ${S.tahun}*\n${c.sekolah.nama}\n\n` + guruKeys.map(g => `${g}\n` + byGuru[g].map(x => `- ${x.k.nama} ${x.s.kod}: ${x.kosong.length}/${x.bil} murid belum diisi`).join("\n")).join("\n\n") + `\n\nSila lengkapkan dalam myMarkah dan tekan Simpan. Terima kasih.`;
     try { await navigator.clipboard.writeText(txt); toast("Senarai disalin."); } catch (e) { modal(`<h3>Salin teks ini</h3><textarea class="inp" rows="12" style="width:100%">${esc(txt)}</textarea><div class="row" style="justify-content:flex-end"><button class="btn" data-close>Tutup</button></div>`, b => $("textarea", b).select()); }
   });
 };
@@ -1442,7 +1442,7 @@ function renderParent() {
   const subjects = []; exs.forEach(e => e.k.rows.forEach(r => { if (!subjects.find(s => s.kod === r.kod)) subjects.push({ kod: r.kod, nama: r.nama }); }));
   const exCol = ["var(--gold)", "var(--em)", "var(--gB)", "var(--gD)"];
   $("#app").innerHTML = `
-  <header class="top"><div class="brand">eMarkah<small>Portal Ibu Bapa · ${esc(doc.sekolah.nama)}</small></div><div class="grow"></div><button class="btn sm" id="pAdd">Tambah anak</button><button class="btn sm" id="pOut">Keluar</button></header>
+  <header class="top"><div class="brand">myMarkah<small>Portal Ibu Bapa · ${esc(doc.sekolah.nama)}</small></div><div class="grow"></div><button class="btn sm" id="pAdd">Tambah anak</button><button class="btn sm" id="pOut">Keluar</button></header>
   <main class="main" style="max-width:980px;margin:0 auto;width:100%">
     ${P.kids.length > 1 ? `<div class="kids">${P.kids.map((k, i) => `<button class="kid ${i === P.cur ? "on" : ""}" data-kid="${i}"><b>${esc(k.docs[0].nama)}</b><span class="small muted">${esc(k.docs[0].kelas)}</span></button>`).join("")}</div>` : ""}
     <div class="head"><div><div class="eyebrow">Keputusan ${esc(doc.tahun)}</div><h2>${esc(doc.nama)}</h2><div class="muted">${esc(doc.kelas)} · Guru kelas: ${esc(doc.guru || "–")}</div></div>
@@ -1483,7 +1483,7 @@ VIEWS.tetapan = el => {
       <label class="f">Nama sekolah<input class="inp" id="sN" value="${esc(c.sekolah.nama)}"></label>
       <label class="f">Alamat ringkas<input class="inp" id="sA" value="${esc(c.sekolah.alamat)}"></label>
       <label class="f">Nama Guru Besar (untuk slip)<input class="inp" id="sG" value="${esc(c.sekolah.gb)}"></label>
-      <label class="f">Alamat laman eMarkah (untuk slip PIN)<input class="inp" id="sU" value="${esc(c.sekolah.url || "")}" placeholder="https://skjalanbintang.github.io/…"></label>
+      <label class="f">Alamat laman myMarkah (untuk slip PIN)<input class="inp" id="sU" value="${esc(c.sekolah.url || "")}" placeholder="https://destarx.github.io/mymarkah/"></label>
       <button class="btn pri" id="sSave" style="justify-self:start">Simpan</button></div>
     <div class="panel stack"><h3>Tahun akademik</h3>
       <p class="muted small" style="margin:0">Tahun aktif: <b>${esc(S.meta.tahunAktif)}</b>. Tahun baharu menyalin tetapan (subjek, kelas, skala, nama ujian). Murid dan markah bermula kosong; import senarai murid baharu selepas itu. Data tahun lepas kekal dan boleh dipilih di bar atas.</p>
